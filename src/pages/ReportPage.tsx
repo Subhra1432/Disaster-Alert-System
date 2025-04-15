@@ -27,6 +27,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { DisasterType, AlertSeverity } from '../models/types';
 import { locationService } from '../services/locationService';
 import { getDisasterTypeLabel } from '../utils/alertUtils';
+import { getDatabaseServiceSync } from '../services/databaseManager';
 import DisasterMap from '../components/DisasterMap';
 import { SelectChangeEvent } from '@mui/material/Select';
 
@@ -198,8 +199,31 @@ const ReportPage: React.FC = () => {
     setError(null);
     
     try {
-      // Mock API call to submit the report
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get database service
+      const dbService = getDatabaseServiceSync();
+      
+      // Create alert object from form data
+      const alertData = {
+        type: formData.type,
+        severity: AlertSeverity.MEDIUM, // Default severity, would be determined by backend in a real app
+        title: formData.title,
+        description: formData.description,
+        location: {
+          name: formData.location.name || 'Reported Location',
+          coordinates: {
+            latitude: formData.location.latitude,
+            longitude: formData.location.longitude
+          }
+        },
+        safetyTips: [], // Would be added by emergency services
+        timestamp: new Date().toISOString(),
+        radius: 5, // Default radius in km
+        active: true
+      };
+      
+      // Submit the alert to the database
+      const alertId = await dbService.addAlert(alertData);
+      console.log('Alert submitted with ID:', alertId);
       
       // Show success message
       setSuccess(true);
@@ -220,6 +244,8 @@ const ReportPage: React.FC = () => {
       // Reset step
       setTimeout(() => {
         setActiveStep(0);
+        // Navigate to the newly created alert
+        navigate(`/alerts/${alertId}`);
       }, 3000);
     } catch (err) {
       setError('Failed to submit your report. Please try again.');

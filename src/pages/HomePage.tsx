@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DisasterAlert, UserLocation, SafetyShelter } from '../models/types';
-import { disasterService } from '../services/disasterApi';
 import { locationService } from '../services/locationService';
 import { notificationService } from '../services/notificationService';
 import { sortAlertsBySeverity } from '../utils/alertUtils';
 import AlertCard from '../components/AlertCard';
 import DisasterMap from '../components/DisasterMap';
 import ShelterCard from '../components/ShelterCard';
+import { getDatabaseServiceSync, getDatabaseType } from '../services/databaseManager';
 import { 
   Typography, 
   Box,
@@ -31,7 +31,8 @@ import {
   NotificationsOff as NotificationsOffIcon,
   LocationOn as LocationIcon,
   DirectionsRun as DirectionsIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  Storage as StorageIcon
 } from '@mui/icons-material';
 
 const HomePage: React.FC = () => {
@@ -44,6 +45,7 @@ const HomePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [databaseType, setDatabaseType] = useState<'firebase' | 'sqlite'>(getDatabaseType());
   const mapRef = useRef<any>(null);
   const theme = useTheme();
   
@@ -58,16 +60,22 @@ const HomePage: React.FC = () => {
     setError(null);
     
     try {
+      // Get the database service
+      const dbService = getDatabaseServiceSync();
+      
+      // Update database type display
+      setDatabaseType(getDatabaseType());
+      
       // Get user location
       const location = await locationService.getUserLocation();
       setUserLocation(location);
       
       // Get all alerts
-      const allAlerts = await disasterService.getActiveAlerts();
+      const allAlerts = await dbService.getActiveAlerts();
       setAlerts(sortAlertsBySeverity(allAlerts));
       
       // Get alerts near user location
-      const alertsNearby = await disasterService.getAlertsNearLocation(
+      const alertsNearby = await dbService.getAlertsNearLocation(
         location.coordinates.latitude,
         location.coordinates.longitude,
         200 // 200km radius
@@ -75,7 +83,7 @@ const HomePage: React.FC = () => {
       setNearbyAlerts(sortAlertsBySeverity(alertsNearby));
       
       // Get nearby shelters
-      const nearbyShelters = await disasterService.getNearbyShelters(
+      const nearbyShelters = await dbService.getNearbyShelters(
         location.coordinates.latitude,
         location.coordinates.longitude,
         100 // 100km radius
@@ -161,6 +169,11 @@ const HomePage: React.FC = () => {
             Real-Time Disaster Alert System
           </Typography>
           <Box>
+            <Tooltip title={`Database: ${databaseType}`}>
+              <IconButton sx={{ mr: 1 }}>
+                <StorageIcon color={databaseType === 'firebase' ? 'error' : 'info'} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={notificationsEnabled ? "Disable notifications" : "Enable notifications"}>
               <IconButton 
                 onClick={toggleNotifications}
@@ -194,6 +207,14 @@ const HomePage: React.FC = () => {
             </Typography>
           </Box>
         )}
+        
+        {/* Database info */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <StorageIcon fontSize="small" sx={{ mr: 0.5, color: databaseType === 'firebase' ? 'error.main' : 'info.main' }} />
+          <Typography variant="body2" color="text.secondary">
+            Using {databaseType === 'firebase' ? 'Firebase' : 'SQLite'} database for data storage
+          </Typography>
+        </Box>
         
         {/* Error message */}
         {error && (

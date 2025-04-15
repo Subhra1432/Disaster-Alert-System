@@ -25,8 +25,8 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import { DisasterAlert, SafetyShelter } from '../models/types';
-import { disasterService } from '../services/disasterApi';
 import { locationService } from '../services/locationService';
+import { getDatabaseServiceSync } from '../services/databaseManager';
 import DisasterMap from '../components/DisasterMap';
 import { 
   getSeverityColor, 
@@ -55,8 +55,11 @@ const AlertDetailPage: React.FC = () => {
           throw new Error('Alert ID is missing');
         }
         
+        // Get database service
+        const dbService = getDatabaseServiceSync();
+        
         // Get alert details
-        const alertData = await disasterService.getAlertById(id);
+        const alertData = await dbService.getAlertById(id);
         
         if (!alertData) {
           throw new Error('Alert not found');
@@ -66,7 +69,7 @@ const AlertDetailPage: React.FC = () => {
         
         // Get nearby shelters
         const location = alertData.location.coordinates;
-        const shelters = await disasterService.getNearbyShelters(
+        const shelters = await dbService.getNearbyShelters(
           location.latitude,
           location.longitude,
           50 // 50km radius
