@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/Disaster-Alert-System/static/css/main.444c79e0.css",
+    "main.js": "/Disaster-Alert-System/static/js/main.5dce6fdd.js",
+    "static/js/453.608c7a3d.chunk.js": "/Disaster-Alert-System/static/js/453.608c7a3d.chunk.js",
+    "index.html": "/Disaster-Alert-System/index.html",
+    "main.444c79e0.css.map": "/Disaster-Alert-System/static/css/main.444c79e0.css.map",
+    "main.5dce6fdd.js.map": "/Disaster-Alert-System/static/js/main.5dce6fdd.js.map",
+    "453.608c7a3d.chunk.js.map": "/Disaster-Alert-System/static/js/453.608c7a3d.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.444c79e0.css",
+    "static/js/main.5dce6fdd.js"
+  ]
+}
