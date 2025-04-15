@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { DisasterAlert, UserLocation, SafetyShelter } from '../models/types';
 import { disasterService } from '../services/disasterApi';
 import { locationService } from '../services/locationService';
@@ -30,7 +30,8 @@ import {
   Notifications as NotificationsIcon, 
   NotificationsOff as NotificationsOffIcon,
   LocationOn as LocationIcon,
-  DirectionsRun as DirectionsIcon
+  DirectionsRun as DirectionsIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 
 const HomePage: React.FC = () => {
@@ -42,6 +43,8 @@ const HomePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const mapRef = useRef<any>(null);
   const theme = useTheme();
   
   // Get all relevant data on initial load
@@ -111,6 +114,18 @@ const HomePage: React.FC = () => {
   
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+  };
+  
+  // Handle alert click to focus map on that location
+  const handleAlertClick = (alertId: string) => {
+    setSelectedAlertId(alertId);
+    
+    // Find the alert by ID
+    const alert = [...alerts, ...nearbyAlerts].find(a => a.id === alertId);
+    if (alert && mapRef.current) {
+      // If we have the alert and the map reference, tell the map to focus on this location
+      mapRef.current.flyToLocation(alert.location.coordinates.latitude, alert.location.coordinates.longitude);
+    }
   };
   
   if (loading) {
@@ -202,10 +217,13 @@ const HomePage: React.FC = () => {
         }}
       >
         <DisasterMap 
+          ref={mapRef}
           alerts={alerts}
           shelters={shelters}
           userLocation={userLocation?.coordinates}
           height="400px"
+          selectedAlertId={selectedAlertId}
+          onAlertClick={handleAlertClick}
         />
       </Paper>
       
@@ -250,7 +268,7 @@ const HomePage: React.FC = () => {
           <Tab 
             label={
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography sx={{ mr: 1 }}>Shelters</Typography>
+                <Typography sx={{ mr: 1 }}>Safety Shelters</Typography>
                 <Chip 
                   label={shelters.length} 
                   color="primary" 
@@ -262,72 +280,101 @@ const HomePage: React.FC = () => {
             id="tab-2" 
           />
         </Tabs>
-      </Paper>
-      
-      {/* Tab Content */}
-      <Paper 
-        elevation={2} 
-        sx={{ 
-          p: 2, 
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          minHeight: '200px',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            boxShadow: 3
-          }
-        }}
-      >
-        {/* Nearby Alerts Tab */}
-        <Box role="tabpanel" hidden={activeTab !== 0} id="tabpanel-0">
-          {nearbyAlerts.length === 0 ? (
-            <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Typography color="text.secondary">
-                No alerts in your area. Stay safe!
-              </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {nearbyAlerts.map(alert => (
-                <AlertCard key={alert.id} alert={alert} />
-              ))}
-            </Box>
-          )}
-        </Box>
         
-        {/* All Alerts Tab */}
-        <Box role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1">
-          {alerts.length === 0 ? (
-            <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Typography color="text.secondary">
-                No active alerts at this time.
+        {/* Tab Content */}
+        <Box sx={{ p: 2 }}>
+          {/* Nearby Alerts Tab */}
+          {activeTab === 0 && (
+            <>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <LocationIcon sx={{ mr: 1, color: 'primary.main' }} />
+                Alerts Near You
               </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {alerts.map(alert => (
-                <AlertCard key={alert.id} alert={alert} compact />
-              ))}
-            </Box>
-          )}
-        </Box>
-        
-        {/* Shelters Tab */}
-        <Box role="tabpanel" hidden={activeTab !== 2} id="tabpanel-2">
-          {shelters.length === 0 ? (
-            <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Typography color="text.secondary">
-                No shelters found in your area.
-              </Typography>
-            </Box>
-          ) : (
-            <Grid container spacing={2}>
-              {shelters.map(shelter => (
-                <Grid item xs={12} sm={6} md={4} key={shelter.id}>
-                  <ShelterCard shelter={shelter} />
+              
+              {nearbyAlerts.length === 0 ? (
+                <Alert severity="info">
+                  No alerts found near your current location. Stay safe!
+                </Alert>
+              ) : (
+                <Grid container spacing={2}>
+                  {nearbyAlerts.map(alert => (
+                    <Grid item xs={12} md={6} key={alert.id}>
+                      <Box 
+                        onClick={() => handleAlertClick(alert.id)}
+                        sx={{ 
+                          cursor: 'pointer',
+                          transform: selectedAlertId === alert.id ? 'scale(1.02)' : 'none',
+                          boxShadow: selectedAlertId === alert.id ? '0 0 0 2px #2196f3' : 'none',
+                          transition: 'all 0.2s ease-in-out',
+                          borderRadius: '8px',
+                        }}
+                      >
+                        <AlertCard alert={alert} />
+                      </Box>
+                    </Grid>
+                  ))}
                 </Grid>
-              ))}
-            </Grid>
+              )}
+            </>
+          )}
+          
+          {/* All Alerts Tab */}
+          {activeTab === 1 && (
+            <>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <WarningIcon sx={{ mr: 1, color: 'primary.main' }} />
+                All Active Alerts
+              </Typography>
+              
+              {alerts.length === 0 ? (
+                <Alert severity="info">
+                  No active alerts at this time. Stay safe!
+                </Alert>
+              ) : (
+                <Grid container spacing={2}>
+                  {alerts.map(alert => (
+                    <Grid item xs={12} md={6} key={alert.id}>
+                      <Box 
+                        onClick={() => handleAlertClick(alert.id)}
+                        sx={{ 
+                          cursor: 'pointer',
+                          transform: selectedAlertId === alert.id ? 'scale(1.02)' : 'none',
+                          boxShadow: selectedAlertId === alert.id ? '0 0 0 2px #2196f3' : 'none',
+                          transition: 'all 0.2s ease-in-out',
+                          borderRadius: '8px',
+                        }}
+                      >
+                        <AlertCard alert={alert} />
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </>
+          )}
+          
+          {/* Shelters Tab */}
+          {activeTab === 2 && (
+            <>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <LocationIcon sx={{ mr: 1, color: 'primary.main' }} />
+                Available Safety Shelters
+              </Typography>
+              
+              {shelters.length === 0 ? (
+                <Alert severity="info">
+                  No safety shelters found in your area.
+                </Alert>
+              ) : (
+                <Grid container spacing={2}>
+                  {shelters.map(shelter => (
+                    <Grid item xs={12} md={6} lg={4} key={shelter.id}>
+                      <ShelterCard shelter={shelter} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </>
           )}
         </Box>
       </Paper>

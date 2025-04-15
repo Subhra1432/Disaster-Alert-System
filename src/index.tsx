@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-// Include Leaflet CSS
+// Include Leaflet CSS - make sure this is loaded before any components using Leaflet
 import 'leaflet/dist/leaflet.css';
 
 // Create root

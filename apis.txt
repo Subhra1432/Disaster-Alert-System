@@ -1,0 +1,86 @@
+# Disaster Alert System - API Reference
+
+## Firebase APIs
+- **Firebase Authentication API**
+  - Used for: User authentication (currently mock-only in the application)
+  - Methods: `getAuth()` from 'firebase/auth'
+
+- **Firebase Firestore API**
+  - Used for: Database storage of disaster alerts and shelters
+  - Methods: 
+    - `getFirestore()` from 'firebase/firestore'
+    - `collection()`, `getDocs()`, `getDoc()`, `doc()`
+    - `query()`, `where()`
+    - `addDoc()`, `updateDoc()`, `deleteDoc()`
+    - Uses `GeoPoint` for location data
+    - Uses `serverTimestamp()` for timestamps
+
+- **Firebase Storage API**
+  - Used for: File storage (currently mock-only in the application)
+  - Methods: `getStorage()` from 'firebase/storage'
+
+## Browser APIs
+- **Geolocation API**
+  - Used for: Getting user's current location
+  - Methods: `navigator.geolocation.getCurrentPosition()`
+  - Service: `locationService.getCurrentLocation()`, `locationService.getUserLocation()`
+
+- **Notification API**
+  - Used for: Showing browser notifications for alerts
+  - Methods: Checks if 'Notification' is in window
+  - Service: `notificationService.requestPermission()`, `notificationService.showAlertNotification()`
+
+## Internal Application APIs/Services
+- **Disaster Service API**
+  - Used for: Managing disaster alerts and safety shelters
+  - Methods:
+    - `getActiveAlerts()` - Fetches all active disaster alerts
+    - `getAlertsNearLocation(lat, lng, radius)` - Finds alerts near a location
+    - `getAlertById(id)` - Gets a specific alert by ID
+    - `addAlert(alert)` - Creates a new alert
+    - `updateAlert(id, data)` - Updates an existing alert
+    - `deleteAlert(id)` - Deletes an alert
+    - `getNearbyShelters(lat, lng, radius)` - Finds shelters near a location
+    - `addShelter(shelter)` - Creates a new shelter
+    - `updateShelter(id, data)` - Updates an existing shelter
+    - `deleteShelter(id)` - Deletes a shelter
+    - `classifyDisasterSeverity(type, params)` - AI-based severity classifier
+
+- **Location Service API**
+  - Used for: Location-related functionality
+  - Methods:
+    - `getCurrentLocation()` - Gets user's current location using browser Geolocation API
+    - `getMockLocation()` - Returns mock location data for testing
+    - `getUserLocation()` - Gets location with fallback to mock data
+
+- **Notification Service API**
+  - Used for: Handling notifications
+  - Methods:
+    - `isNotificationSupported()` - Checks if browser supports notifications
+    - `requestPermission()` - Requests permission to show notifications
+    - `showAlertNotification(alert)` - Shows notification for an alert
+    - `sendSMSAlert(phoneNumber, alert)` - Mock SMS notification service
+
+## External Libraries APIs
+- **React Leaflet / Leaflet.js API**
+  - Used for: Interactive mapping functionality
+  - Components: 
+    - `MapContainer`, `TileLayer`, `Marker`, `Popup`, `Circle`, `useMap`
+  - Classes:
+    - `L.icon`, `L.divIcon` for custom markers
+
+- **Material UI API**
+  - Used for: UI components and styling
+  - Components:
+    - Layout: `Box`, `Container`, `Grid`, `Paper`
+    - Navigation: `AppBar`, `Tabs`, `Tab`
+    - Feedback: `Alert`, `Chip`, `CircularProgress`
+    - Inputs: `Button`, `IconButton`
+    - Data Display: `Typography`, `List`, `ListItem`
+
+## Mock API Services (For Development/Testing)
+- Mock disaster data service (when Firebase is not configured)
+- Mock shelter data service (when Firebase is not configured)
+- Mock location service (when Geolocation API is not available)
+- Mock notification service (for simulating notifications)
+- Mock SMS notification service (simulates integration with SMS providers) 

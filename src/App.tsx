@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { HashRouter, Routes, Route, Link } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import AppBar from '@mui/material/AppBar';
@@ -8,6 +8,8 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import WarningIcon from '@mui/icons-material/Warning';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import Box from '@mui/material/Box';
 import './App.css';
 import HomePage from './pages/HomePage';
 import AlertDetailPage from './pages/AlertDetailPage';
@@ -50,17 +52,48 @@ const theme = createTheme({
   },
 });
 
+// LiveClock component to display real-time updates
+const LiveClock = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+  
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      background: 'rgba(0,0,0,0.1)', 
+      px: 2, 
+      py: 0.5, 
+      borderRadius: 1,
+      marginRight: 2 
+    }}>
+      <AccessTimeIcon sx={{ mr: 1, fontSize: '0.9rem' }} />
+      <Typography variant="body2">
+        {currentTime.toLocaleTimeString()} | {currentTime.toLocaleDateString()}
+      </Typography>
+    </Box>
+  );
+};
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
+      <HashRouter>
         <AppBar position="static" color="primary" elevation={0}>
           <Toolbar>
             <WarningIcon sx={{ mr: 1 }} />
             <Typography variant="h6" component={Link} to="/" sx={{ flexGrow: 1, color: 'white', textDecoration: 'none' }}>
               Disaster Alert System
             </Typography>
+            <LiveClock />
             <Button 
               component={Link} 
               to="/report" 
@@ -98,7 +131,7 @@ function App() {
             Disaster Alert System © {new Date().getFullYear()} | Real-time monitoring for emergency situations
           </Typography>
         </footer>
-      </BrowserRouter>
+      </HashRouter>
     </ThemeProvider>
   );
 }

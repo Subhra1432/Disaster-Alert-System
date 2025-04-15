@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useCallback } from 'react';
 import { Paper, Typography, Box, Chip, Button, Alert } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -9,19 +9,40 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-le
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { calculateDistance, getDistanceDescription } from '../utils/locationUtils';
+import fixLeafletIcons from '../utils/leafletIconFix';
 
-// Fix for Leaflet marker icons
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+// Fix Leaflet icon issue with webpack/GitHub Pages
+fixLeafletIcons();
 
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
+// Custom component to control map view and get reference to the map
+const MapController = forwardRef(({ 
+  center, 
+  zoom, 
+  onMapReady 
+}: { 
+  center: [number, number], 
+  zoom: number, 
+  onMapReady: (map: L.Map) => void 
+}, ref) => {
+  const map = useMap();
+  
+  useImperativeHandle(ref, () => ({
+    flyToLocation: (lat: number, lng: number, zoomLevel: number = 13) => {
+      map.flyTo([lat, lng], zoomLevel, {
+        animate: true,
+        duration: 1.5
+      });
+    }
+  }));
+  
+  // Set initial view and call onMapReady
+  useEffect(() => {
+    map.setView(center, zoom);
+    onMapReady(map);
+  }, [center, zoom, map, onMapReady]);
+  
+  return null;
 });
-
-L.Marker.prototype.options.icon = DefaultIcon;
 
 // Component to handle current location and map center changing
 const LocationMarker = ({ 
@@ -38,35 +59,50 @@ const LocationMarker = ({
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const map = useMap();
+  const locationUpdateInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    map.locate({ setView: true, maxZoom: 13 });
+    // Only locate on first load, not on re-renders
+    if (position === null) {
+      map.locate({ setView: true, maxZoom: 13 });
+    }
     
     const locationHandler = (e: L.LocationEvent) => {
       const newPosition: [number, number] = [e.latlng.lat, e.latlng.lng];
-      setPosition(newPosition);
-      setAccuracy(e.accuracy);
-      map.flyTo(e.latlng, 13);
       
-      if (onLocationFound) {
-        onLocationFound(newPosition);
-      }
-      
-      // Check if user is near any disaster
-      if (alerts && alerts.length > 0) {
-        const nearbyAlerts = alerts.filter(alert => {
-          const distance = calculateDistance(
-            newPosition[0], 
-            newPosition[1], 
-            alert.location.coordinates.latitude, 
-            alert.location.coordinates.longitude
-          );
-          // Consider alerts within 50km as "nearby"
-          return distance <= 50;
-        });
+      // Only update position if it's changed significantly (more than 10 meters)
+      if (position === null || calculateDistance(
+          position[0], position[1], 
+          newPosition[0], newPosition[1]
+        ) > 0.01) {
+        setPosition(newPosition);
+        setAccuracy(e.accuracy);
         
-        if (nearbyAlerts.length > 0) {
-          onProximityAlert(nearbyAlerts);
+        // Only fly to location on initial load, not on updates
+        if (position === null) {
+          map.flyTo(e.latlng, 13);
+        }
+        
+        if (onLocationFound) {
+          onLocationFound(newPosition);
+        }
+        
+        // Check if user is near any disaster
+        if (alerts && alerts.length > 0) {
+          const nearbyAlerts = alerts.filter(alert => {
+            const distance = calculateDistance(
+              newPosition[0], 
+              newPosition[1], 
+              alert.location.coordinates.latitude, 
+              alert.location.coordinates.longitude
+            );
+            // Consider alerts within 50km as "nearby"
+            return distance <= 50;
+          });
+          
+          if (nearbyAlerts.length > 0) {
+            onProximityAlert(nearbyAlerts);
+          }
         }
       }
     };
@@ -76,16 +112,33 @@ const LocationMarker = ({
       console.error('Error getting location:', e.message);
     });
 
-    // Set up periodic location updates
-    const intervalId = setInterval(() => {
-      map.locate({ setView: false });
-    }, 30000); // Update every 30 seconds
+    // Set up periodic location updates at a lower frequency
+    if (locationUpdateInterval.current === null) {
+      locationUpdateInterval.current = setInterval(() => {
+        map.locate({ setView: false, maxZoom: 13 });
+      }, 60000); // Update every 60 seconds instead of 30
+    }
 
     return () => {
       map.off('locationfound', locationHandler);
-      clearInterval(intervalId);
+      if (locationUpdateInterval.current) {
+        clearInterval(locationUpdateInterval.current);
+        locationUpdateInterval.current = null;
+      }
     };
-  }, [map, alerts, onProximityAlert, onLocationFound]);
+  }, [map, position, alerts, onProximityAlert, onLocationFound]);
+
+  // Memoize the Circle component to prevent unnecessary re-renders
+  const LocationCircle = useMemo(() => {
+    if (!position) return null;
+    return (
+      <Circle 
+        center={position}
+        radius={accuracy || 500}
+        pathOptions={{ color: '#2196f3', fillColor: '#2196f3', fillOpacity: 0.1, weight: 1 }}
+      />
+    );
+  }, [position, accuracy]);
 
   return position === null ? null : (
     <>
@@ -96,11 +149,7 @@ const LocationMarker = ({
           Accuracy: {accuracy ? `±${Math.round(accuracy)} meters` : 'Unknown'}
         </Popup>
       </Marker>
-      <Circle 
-        center={position}
-        radius={accuracy || 500}
-        pathOptions={{ color: '#2196f3', fillColor: '#2196f3', fillOpacity: 0.1, weight: 1 }}
-      />
+      {LocationCircle}
     </>
   );
 };
@@ -113,23 +162,87 @@ interface DisasterMapProps {
   width?: string;
   zoom?: number;
   onAlertClick?: (alertId: string) => void;
+  selectedAlertId?: string | null;
 }
 
-const DisasterMap: React.FC<DisasterMapProps> = ({
+const DisasterMap = forwardRef<any, DisasterMapProps>(({
   alerts: initialAlerts,
   shelters: initialShelters = [],
   userLocation,
   height = '400px',
   width = '100%',
   zoom = 8,
-  onAlertClick
-}) => {
+  onAlertClick,
+  selectedAlertId
+}, ref) => {
   const [showCurrentLocation, setShowCurrentLocation] = useState(true);
   const [nearbyAlerts, setNearbyAlerts] = useState<DisasterAlert[]>([]);
   const [showProximityWarning, setShowProximityWarning] = useState(false);
   const [currentPosition, setCurrentPosition] = useState<[number, number] | null>(null);
-  const [alerts] = useState<DisasterAlert[]>(initialAlerts);
-  const [shelters] = useState<SafetyShelter[]>(initialShelters);
+  
+  // Use useMemo to prevent unnecessary re-renders
+  const alerts = useMemo(() => initialAlerts, [initialAlerts]);
+  const shelters = useMemo(() => initialShelters, [initialShelters]);
+  
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const mapControllerRef = useRef<any>(null);
+
+  // Handle map ready callback - use useCallback to stabilize
+  const handleMapReady = useCallback((map: L.Map) => {
+    setMapInstance(map);
+  }, []);
+
+  // Expose methods via ref with useCallback
+  useImperativeHandle(ref, () => ({
+    flyToLocation: (lat: number, lng: number, zoomLevel?: number) => {
+      if (mapControllerRef.current) {
+        mapControllerRef.current.flyToLocation(lat, lng, zoomLevel);
+      }
+    }
+  }), []);
+
+  // Stabilize the mapCenter value with useMemo to prevent fluctuations
+  const mapCenter: [number, number] = useMemo(() => {
+    if (userLocation) {
+      return [userLocation.latitude, userLocation.longitude];
+    }
+    if (alerts.length > 0) {
+      return [alerts[0].location.coordinates.latitude, alerts[0].location.coordinates.longitude];
+    }
+    return [20, 0]; // Default center
+  }, [userLocation, alerts]);
+
+  // Memoize the icons to prevent recreation
+  const shelterIcon = useMemo(() => L.divIcon({
+    className: 'custom-div-icon',
+    html: '<div style="background-color: #4caf50; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  }), []);
+  
+  const userIcon = useMemo(() => L.divIcon({
+    className: 'custom-div-icon',
+    html: '<div style="background-color: #2196f3; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #2196f3;"></div>',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10]
+  }), []);
+
+  const currentLocationIcon = useMemo(() => L.divIcon({
+    className: 'custom-div-icon',
+    html: '<div style="background-color: #4a148c; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #4a148c;"></div>',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10]
+  }), []);
+
+  // Stable handler for proximity alerts
+  const handleProximityAlert = useCallback((alertsList: DisasterAlert[]) => {
+    setNearbyAlerts(alertsList);
+  }, []);
+
+  // Stable handler for location found
+  const handleLocationFound = useCallback((position: [number, number]) => {
+    setCurrentPosition(position);
+  }, []);
 
   useEffect(() => {
     if (nearbyAlerts.length > 0) {
@@ -143,18 +256,25 @@ const DisasterMap: React.FC<DisasterMapProps> = ({
     }
   }, [nearbyAlerts]);
 
+  // Effect to focus on selected alert
+  useEffect(() => {
+    if (selectedAlertId && mapControllerRef.current) {
+      const selectedAlert = alerts.find(alert => alert.id === selectedAlertId);
+      if (selectedAlert) {
+        mapControllerRef.current.flyToLocation(
+          selectedAlert.location.coordinates.latitude,
+          selectedAlert.location.coordinates.longitude,
+          13
+        );
+      }
+    }
+  }, [selectedAlertId, alerts]);
+
   // Group alerts by severity for better visualization
   const criticalAlerts = alerts.filter(alert => alert.severity === AlertSeverity.CRITICAL);
   const highAlerts = alerts.filter(alert => alert.severity === AlertSeverity.HIGH);
   const mediumAlerts = alerts.filter(alert => alert.severity === AlertSeverity.MEDIUM);
   const lowAlerts = alerts.filter(alert => alert.severity === AlertSeverity.LOW);
-  
-  // Calculate map center based on user location or first alert
-  const mapCenter: [number, number] = userLocation 
-    ? [userLocation.latitude, userLocation.longitude] 
-    : alerts.length > 0 
-      ? [alerts[0].location.coordinates.latitude, alerts[0].location.coordinates.longitude]
-      : [20, 0]; // Default center if no location available
   
   // Create custom marker icons based on severity
   const createAlertIcon = (severity: AlertSeverity) => {
@@ -167,40 +287,212 @@ const DisasterMap: React.FC<DisasterMapProps> = ({
     });
   };
   
-  // Create shelter icon
-  const shelterIcon = L.divIcon({
-    className: 'custom-div-icon',
-    html: '<div style="background-color: #4caf50; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
-  });
-  
-  // Create user location icon
-  const userIcon = L.divIcon({
-    className: 'custom-div-icon',
-    html: '<div style="background-color: #2196f3; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #2196f3;"></div>',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10]
-  });
+  // Memoize the MapContainer to prevent re-renders
+  const MapContainerComponent = useMemo(() => (
+    <MapContainer 
+      key="map-container"
+      center={mapCenter}
+      zoom={zoom}
+      style={{ height: '100%', width: '100%' }}
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      
+      <MapController 
+        ref={mapControllerRef}
+        center={mapCenter}
+        zoom={zoom}
+        onMapReady={handleMapReady}
+      />
+      
+      {showCurrentLocation && (
+        <LocationMarker 
+          userIcon={currentLocationIcon} 
+          alerts={alerts}
+          onProximityAlert={handleProximityAlert}
+          onLocationFound={handleLocationFound}
+        />
+      )}
+      
+      {/* Stored user location */}
+      {userLocation && (
+        <>
+          <Marker 
+            position={[userLocation.latitude, userLocation.longitude] as [number, number]}
+            icon={userIcon}
+          >
+            <Popup>
+              <strong>Your Stored Location</strong>
+            </Popup>
+          </Marker>
+          <Circle 
+            center={[userLocation.latitude, userLocation.longitude] as [number, number]}
+            radius={5000}
+            pathOptions={{ color: '#2196f3', fillColor: '#2196f3', fillOpacity: 0.1, weight: 1 }}
+          />
+        </>
+      )}
+      
+      {/* Disaster alerts */}
+      {alerts.map(alert => {
+        const isNearby = nearbyAlerts.some(nearbyAlert => nearbyAlert.id === alert.id);
+        const isSelected = alert.id === selectedAlertId;
+        
+        // Calculate distance from current position
+        let distance: number | null = null;
+        let distanceText = '';
+        if (currentPosition) {
+          distance = calculateDistance(
+            currentPosition[0],
+            currentPosition[1],
+            alert.location.coordinates.latitude,
+            alert.location.coordinates.longitude
+          );
+          distanceText = getDistanceDescription(distance);
+        }
+        
+        return (
+          <Marker
+            key={alert.id}
+            position={[alert.location.coordinates.latitude, alert.location.coordinates.longitude] as [number, number]}
+            icon={createAlertIcon(alert.severity)}
+            eventHandlers={{
+              click: () => onAlertClick && onAlertClick(alert.id)
+            }}
+          >
+            {(isNearby || isSelected) && (
+              <Circle 
+                center={[alert.location.coordinates.latitude, alert.location.coordinates.longitude] as [number, number]}
+                radius={isSelected ? 10000 : 20000} // Highlight radius
+                pathOptions={{ 
+                  color: isSelected ? '#2196f3' : '#f44336', 
+                  fillColor: isSelected ? '#2196f3' : '#f44336', 
+                  fillOpacity: 0.2, 
+                  weight: 2, 
+                  dashArray: isSelected ? undefined : '5, 5' 
+                }}
+              />
+            )}
+            <Popup>
+              <Box sx={{ p: 1 }}>
+                <Typography variant="subtitle2">
+                  {getDisasterIcon(alert.type)} {alert.title}
+                  {isNearby && (
+                    <Chip 
+                      size="small" 
+                      label="NEARBY" 
+                      color="error" 
+                      sx={{ ml: 1, height: 20, fontSize: '0.6rem' }} 
+                    />
+                  )}
+                  {isSelected && (
+                    <Chip 
+                      size="small" 
+                      label="SELECTED" 
+                      color="primary" 
+                      sx={{ ml: 1, height: 20, fontSize: '0.6rem' }} 
+                    />
+                  )}
+                </Typography>
+                <Chip
+                  size="small"
+                  label={getSeverityLabel(alert.severity)}
+                  sx={{
+                    bgcolor: getSeverityColor(alert.severity),
+                    color: 'white',
+                    fontSize: '0.7rem',
+                    height: '20px',
+                    my: 0.5
+                  }}
+                />
+                <Typography variant="body2">{alert.description}</Typography>
+                <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                  <LocationOnIcon sx={{ fontSize: '0.8rem', mr: 0.5 }} />
+                  <Typography variant="caption" color="text.secondary">
+                    {alert.location.name}
+                  </Typography>
+                  {distance !== null && (
+                    <span style={{ marginLeft: '5px', fontStyle: 'italic' }}>
+                      ({distanceText})
+                    </span>
+                  )}
+                </Typography>
+              </Box>
+            </Popup>
+          </Marker>
+        );
+      })}
+      
+      {/* Shelters */}
+      {shelters.map(shelter => {
+        // Calculate distance from current position
+        let distance: number | null = null;
+        let distanceText = '';
+        if (currentPosition) {
+          distance = calculateDistance(
+            currentPosition[0],
+            currentPosition[1],
+            shelter.coordinates.latitude,
+            shelter.coordinates.longitude
+          );
+          distanceText = getDistanceDescription(distance);
+        }
+        
+        return (
+          <Marker
+            key={shelter.id}
+            position={[shelter.coordinates.latitude, shelter.coordinates.longitude] as [number, number]}
+            icon={shelterIcon}
+          >
+            <Popup>
+              <Box sx={{ p: 1 }}>
+                <Typography variant="subtitle2">
+                  {shelter.name}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Address:</strong> {shelter.address}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Capacity:</strong> {shelter.capacity} people
+                </Typography>
+                <Chip
+                  size="small"
+                  label={shelter.available ? 'Open' : 'Full'}
+                  color={shelter.available ? 'success' : 'error'}
+                  sx={{ mt: 1, height: '20px' }}
+                />
+                {distance !== null && (
+                  <Typography variant="caption" display="block" sx={{ mt: 1, fontStyle: 'italic' }}>
+                    Distance: {distanceText}
+                  </Typography>
+                )}
+              </Box>
+            </Popup>
+          </Marker>
+        );
+      })}
+    </MapContainer>
+  ), [
+    mapCenter, 
+    zoom, 
+    mapInstance, 
+    showCurrentLocation, 
+    currentLocationIcon, 
+    alerts, 
+    handleProximityAlert, 
+    handleLocationFound, 
+    userLocation, 
+    userIcon, 
+    nearbyAlerts, 
+    selectedAlertId, 
+    currentPosition, 
+    shelters, 
+    shelterIcon,
+    onAlertClick
+  ]);
 
-  // Create current location icon
-  const currentLocationIcon = L.divIcon({
-    className: 'custom-div-icon',
-    html: '<div style="background-color: #4a148c; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #4a148c;"></div>',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10]
-  });
-
-  // Handle proximity alerts
-  const handleProximityAlert = (alerts: DisasterAlert[]) => {
-    setNearbyAlerts(alerts);
-  };
-
-  // Handle location found
-  const handleLocationFound = (position: [number, number]) => {
-    setCurrentPosition(position);
-  };
-  
   return (
     <Paper 
       elevation={2}
@@ -330,7 +622,7 @@ const DisasterMap: React.FC<DisasterMapProps> = ({
               >
                 Critical Alerts
               </Typography>
-              {criticalAlerts.map(alert => renderAlertItem(alert, onAlertClick))}
+              {criticalAlerts.map(alert => renderAlertItem(alert, onAlertClick, alert.id === selectedAlertId))}
             </>
           )}
           
@@ -346,7 +638,7 @@ const DisasterMap: React.FC<DisasterMapProps> = ({
               >
                 High Priority
               </Typography>
-              {highAlerts.map(alert => renderAlertItem(alert, onAlertClick))}
+              {highAlerts.map(alert => renderAlertItem(alert, onAlertClick, alert.id === selectedAlertId))}
             </>
           )}
           
@@ -362,7 +654,7 @@ const DisasterMap: React.FC<DisasterMapProps> = ({
               >
                 Medium Priority
               </Typography>
-              {mediumAlerts.map(alert => renderAlertItem(alert, onAlertClick))}
+              {mediumAlerts.map(alert => renderAlertItem(alert, onAlertClick, alert.id === selectedAlertId))}
             </>
           )}
           
@@ -378,7 +670,7 @@ const DisasterMap: React.FC<DisasterMapProps> = ({
               >
                 Low Priority
               </Typography>
-              {lowAlerts.map(alert => renderAlertItem(alert, onAlertClick))}
+              {lowAlerts.map(alert => renderAlertItem(alert, onAlertClick, alert.id === selectedAlertId))}
             </>
           )}
           
@@ -393,173 +685,12 @@ const DisasterMap: React.FC<DisasterMapProps> = ({
         
         {/* Interactive Map */}
         <Box sx={{ flex: 1, position: 'relative' }}>
-          <MapContainer 
-            center={mapCenter}
-            zoom={zoom}
-            style={{ height: '100%', width: '100%' }}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            
-            {showCurrentLocation && (
-              <LocationMarker 
-                userIcon={currentLocationIcon} 
-                alerts={alerts}
-                onProximityAlert={handleProximityAlert}
-                onLocationFound={handleLocationFound}
-              />
-            )}
-            
-            {/* Stored user location */}
-            {userLocation && (
-              <>
-                <Marker 
-                  position={[userLocation.latitude, userLocation.longitude] as [number, number]}
-                  icon={userIcon}
-                >
-                  <Popup>
-                    <strong>Your Stored Location</strong>
-                  </Popup>
-                </Marker>
-                <Circle 
-                  center={[userLocation.latitude, userLocation.longitude] as [number, number]}
-                  radius={5000}
-                  pathOptions={{ color: '#2196f3', fillColor: '#2196f3', fillOpacity: 0.1, weight: 1 }}
-                />
-              </>
-            )}
-            
-            {/* Disaster alerts */}
-            {alerts.map(alert => {
-              const isNearby = nearbyAlerts.some(nearbyAlert => nearbyAlert.id === alert.id);
-              
-              // Calculate distance from current position
-              let distance: number | null = null;
-              let distanceText = '';
-              if (currentPosition) {
-                distance = calculateDistance(
-                  currentPosition[0],
-                  currentPosition[1],
-                  alert.location.coordinates.latitude,
-                  alert.location.coordinates.longitude
-                );
-                distanceText = getDistanceDescription(distance);
-              }
-              
-              return (
-                <Marker
-                  key={alert.id}
-                  position={[alert.location.coordinates.latitude, alert.location.coordinates.longitude] as [number, number]}
-                  icon={createAlertIcon(alert.severity)}
-                  eventHandlers={{
-                    click: () => onAlertClick && onAlertClick(alert.id)
-                  }}
-                >
-                  {isNearby && (
-                    <Circle 
-                      center={[alert.location.coordinates.latitude, alert.location.coordinates.longitude] as [number, number]}
-                      radius={20000} // 20km danger zone
-                      pathOptions={{ color: '#f44336', fillColor: '#f44336', fillOpacity: 0.2, weight: 2, dashArray: '5, 5' }}
-                    />
-                  )}
-                  <Popup>
-                    <Box sx={{ p: 1 }}>
-                      <Typography variant="subtitle2">
-                        {getDisasterIcon(alert.type)} {alert.title}
-                        {isNearby && (
-                          <Chip 
-                            size="small" 
-                            label="NEARBY" 
-                            color="error" 
-                            sx={{ ml: 1, height: 20, fontSize: '0.6rem' }} 
-                          />
-                        )}
-                      </Typography>
-                      <Chip
-                        size="small"
-                        label={getSeverityLabel(alert.severity)}
-                        sx={{
-                          bgcolor: getSeverityColor(alert.severity),
-                          color: 'white',
-                          fontSize: '0.7rem',
-                          height: '20px',
-                          my: 0.5
-                        }}
-                      />
-                      <Typography variant="body2">{alert.description}</Typography>
-                      <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <LocationOnIcon sx={{ fontSize: '0.8rem', mr: 0.5 }} />
-                        <Typography variant="caption" color="text.secondary">
-                          {alert.location.name}
-                        </Typography>
-                        {distance !== null && (
-                          <span style={{ marginLeft: '5px', fontStyle: 'italic' }}>
-                            ({distanceText})
-                          </span>
-                        )}
-                      </Typography>
-                    </Box>
-                  </Popup>
-                </Marker>
-              );
-            })}
-            
-            {/* Shelters */}
-            {shelters.map(shelter => {
-              // Calculate distance from current position
-              let distance: number | null = null;
-              let distanceText = '';
-              if (currentPosition) {
-                distance = calculateDistance(
-                  currentPosition[0],
-                  currentPosition[1],
-                  shelter.coordinates.latitude,
-                  shelter.coordinates.longitude
-                );
-                distanceText = getDistanceDescription(distance);
-              }
-              
-              return (
-                <Marker
-                  key={shelter.id}
-                  position={[shelter.coordinates.latitude, shelter.coordinates.longitude] as [number, number]}
-                  icon={shelterIcon}
-                >
-                  <Popup>
-                    <Box sx={{ p: 1 }}>
-                      <Typography variant="subtitle2">
-                        {shelter.name}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>Address:</strong> {shelter.address}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>Capacity:</strong> {shelter.capacity} people
-                      </Typography>
-                      <Chip
-                        size="small"
-                        label={shelter.available ? 'Open' : 'Full'}
-                        color={shelter.available ? 'success' : 'error'}
-                        sx={{ mt: 1, height: '20px' }}
-                      />
-                      {distance !== null && (
-                        <Typography variant="caption" display="block" sx={{ mt: 1, fontStyle: 'italic' }}>
-                          Distance: {distanceText}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MapContainer>
+          {MapContainerComponent}
         </Box>
       </Box>
     </Paper>
   );
-};
+});
 
 // Helper function to render alert items
 const renderAlertItem = (alert: DisasterAlert, onAlertClick?: (id: string) => void, isNearby: boolean = false) => {
