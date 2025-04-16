@@ -11,7 +11,31 @@
       content="Real-time disaster alert system"
     />
     <title>Disaster Alert System</title>
-    <script src="%PUBLIC_URL%/redirect.js"></script>
+    <script>
+      // Ensure we're using hash routing on GitHub Pages
+      (function() {
+        var isGitHubPages = window.location.hostname.indexOf('github.io') > -1;
+        if (!isGitHubPages) return; // Only run on GitHub Pages
+        
+        var l = window.location;
+        
+        // If we have a direct path without hash, convert to hash path
+        if (l.pathname.indexOf('/Disaster-Alert-System/') === 0 && 
+            l.pathname !== '/Disaster-Alert-System/' && 
+            !l.hash) {
+          
+          var path = l.pathname.replace('/Disaster-Alert-System/', '');
+          if (path) {
+            // Redirect to the hash-based path
+            window.location.replace(
+              l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+              '/Disaster-Alert-System/#/' + path + 
+              l.search
+            );
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

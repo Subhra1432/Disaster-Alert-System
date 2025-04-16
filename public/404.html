@@ -2,29 +2,78 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Disaster Alert System</title>
+  <title>Disaster Alert System - Redirecting</title>
   <script>
-    // Simple redirect to homepage with hash
-    var loc = window.location;
-    var repoName = loc.pathname.split('/')[1]; // Gets "Disaster-Alert-System"
-    var baseUrl = loc.origin + '/' + repoName;
+    // Single Page Apps for GitHub Pages
+    // MIT License
+    // Modified from: https://github.com/rafgraph/spa-github-pages
     
-    // Get the path after the repo name to use as a route
-    var pathSegments = loc.pathname.split('/').slice(2);
-    var route = pathSegments.join('/');
+    // This script takes the current URL and converts the path and query
+    // parameters into a hash route that a client-side router can handle
     
-    if (route) {
-      // If there's a route, redirect to it using hash
-      window.location.replace(baseUrl + '/#/' + route);
-    } else {
-      // Otherwise just go to the homepage
-      window.location.replace(baseUrl);
-    }
+    // GitHub Pages serves 404.html for all paths that don't exist
+    // So this script runs on 404.html to redirect to the index.html page
+    // with the route in the hash so that the client-side router can handle it
+    
+    (function() {
+      var redirectToHome = function() {
+        var l = window.location;
+        window.location.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          '/Disaster-Alert-System/'
+        );
+      };
+      
+      try {
+        var pathSegmentsToKeep = 1; // Keep only /Disaster-Alert-System/ in path
+        var l = window.location;
+        
+        // If we're not on the expected site or the path is just the project, go to home
+        if (l.hostname.indexOf('github.io') === -1 || 
+            l.pathname === '/Disaster-Alert-System/' || 
+            l.pathname === '/Disaster-Alert-System') {
+          redirectToHome();
+          return;
+        }
+        
+        // Get the path after /Disaster-Alert-System/
+        var path = l.pathname.split('/').slice(pathSegmentsToKeep + 1).join('/');
+        
+        // If there's a path, redirect with the path as a hash route
+        if (path) {
+          window.location.replace(
+            l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+            '/Disaster-Alert-System/#/' + path +
+            (l.search ? l.search : '') 
+          );
+        } else {
+          redirectToHome();
+        }
+      } catch (e) {
+        // If anything fails, just go to the homepage
+        console.error('Error in redirect script:', e);
+        redirectToHome();
+      }
+    })();
   </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #f8f9fa;
+    }
+    h2 {
+      color: #d32f2f;
+    }
+    p {
+      margin: 20px 0;
+    }
+  </style>
 </head>
 <body>
-  <h2 style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
-    Redirecting to Disaster Alert System...
-  </h2>
+  <h2>Redirecting to Disaster Alert System...</h2>
+  <p>Please wait while we redirect you to the application.</p>
+  <p>If you are not redirected automatically, <a href="/Disaster-Alert-System/">click here</a> to go to the homepage.</p>
 </body>
 </html> 
