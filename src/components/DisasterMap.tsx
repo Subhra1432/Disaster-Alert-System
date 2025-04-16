@@ -140,7 +140,7 @@ const DisasterMap = forwardRef<any, DisasterMapProps>(({
   userLocation,
   height = '400px',
   width = '100%',
-  zoom = 8,
+  zoom = 2,
   onAlertClick,
   selectedAlertId
 }, ref) => {
@@ -176,9 +176,20 @@ const DisasterMap = forwardRef<any, DisasterMapProps>(({
       return [userLocation.latitude, userLocation.longitude];
     }
     if (alerts.length > 0) {
+      // Try to find an Indian alert first for initial centering
+      const indianAlert = alerts.find(a => 
+        a.location.coordinates.latitude > 8 && 
+        a.location.coordinates.latitude < 37 && 
+        a.location.coordinates.longitude > 68 && 
+        a.location.coordinates.longitude < 98
+      );
+      
+      if (indianAlert) {
+        return [indianAlert.location.coordinates.latitude, indianAlert.location.coordinates.longitude];
+      }
       return [alerts[0].location.coordinates.latitude, alerts[0].location.coordinates.longitude];
     }
-    return [20, 0]; // Default center
+    return [20, 0]; // Default center at a global view
   }, [userLocation, alerts]);
 
   // Memoize the icons to prevent recreation

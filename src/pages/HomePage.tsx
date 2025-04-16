@@ -74,7 +74,7 @@ const HomePage: React.FC = () => {
       const alertsNearby = await dbService.getAlertsNearLocation(
         location.coordinates.latitude,
         location.coordinates.longitude,
-        200 // 200km radius
+        2000 // 2000km radius - increased to show global data
       );
       setNearbyAlerts(sortAlertsBySeverity(alertsNearby));
       
@@ -82,7 +82,7 @@ const HomePage: React.FC = () => {
       const nearbyShelters = await dbService.getNearbyShelters(
         location.coordinates.latitude,
         location.coordinates.longitude,
-        100 // 100km radius
+        2000 // 2000km radius - increased to show global data
       );
       setShelters(nearbyShelters);
       
