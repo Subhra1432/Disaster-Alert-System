@@ -19,19 +19,14 @@ import {
   Grid, 
   Chip,
   Alert, 
-  Card, 
-  CardContent, 
-  CardActions,
   IconButton,
-  Tooltip,
-  useTheme
+  Tooltip
 } from '@mui/material';
 import { 
   Refresh as RefreshIcon, 
   Notifications as NotificationsIcon, 
   NotificationsOff as NotificationsOffIcon,
   LocationOn as LocationIcon,
-  DirectionsRun as DirectionsIcon,
   Warning as WarningIcon,
   Storage as StorageIcon,
   FileDownload as FileDownloadIcon
@@ -47,9 +42,8 @@ const HomePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
-  const [databaseType, setDatabaseType] = useState<string>('real-api');
+  const [databaseType, setDatabaseType] = useState<string>('mock');
   const mapRef = useRef<any>(null);
-  const theme = useTheme();
   
   // Get all relevant data on initial load
   useEffect(() => {
@@ -64,7 +58,6 @@ const HomePage: React.FC = () => {
     try {
       // Get the database service
       const dbService = getDatabaseServiceSync();
-      console.log('Using database service:', getDatabaseType());
       
       // Update database type display
       setDatabaseType(getDatabaseType());
@@ -74,12 +67,7 @@ const HomePage: React.FC = () => {
       setUserLocation(location);
       
       // Get all alerts
-      console.log('Fetching real-time alerts...');
       const allAlerts = await dbService.getActiveAlerts();
-      console.log(`Received ${allAlerts.length} real-time alerts`);
-      if (allAlerts.length > 0) {
-        console.log('First alert:', allAlerts[0]);
-      }
       setAlerts(sortAlertsBySeverity(allAlerts));
       
       // Get alerts near user location
@@ -91,16 +79,11 @@ const HomePage: React.FC = () => {
       setNearbyAlerts(sortAlertsBySeverity(alertsNearby));
       
       // Get nearby shelters
-      console.log('Fetching shelters...');
       const nearbyShelters = await dbService.getNearbyShelters(
         location.coordinates.latitude,
         location.coordinates.longitude,
         100 // 100km radius
       );
-      console.log(`Received ${nearbyShelters.length} shelters`);
-      if (nearbyShelters.length > 0) {
-        console.log('First shelter:', nearbyShelters[0]);
-      }
       setShelters(nearbyShelters);
       
       // Show notifications for nearby alerts
@@ -179,12 +162,12 @@ const HomePage: React.FC = () => {
           mb: 2 
         }}>
           <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
-            Real-Time Disaster Alert System
+            Disaster Alert System
           </Typography>
           <Box>
-            <Tooltip title={`Database: ${databaseType}`}>
+            <Tooltip title={`Using mock data`}>
               <IconButton sx={{ mr: 1 }}>
-                <StorageIcon color={databaseType === 'firebase' ? 'error' : 'info'} />
+                <StorageIcon color="info" />
               </IconButton>
             </Tooltip>
             <Tooltip title={notificationsEnabled ? "Disable notifications" : "Enable notifications"}>
@@ -198,81 +181,29 @@ const HomePage: React.FC = () => {
             </Tooltip>
             <Button
               variant="contained"
-              color="primary"
               startIcon={<RefreshIcon />}
               onClick={fetchAllData}
-              disabled={loading}
-              size="small"
+              sx={{ mr: 1 }}
             >
-              Refresh
+              Refresh Data
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadIcon />}
+              onClick={() => databaseExportService.exportToExcel(alerts, shelters)}
+            >
+              Export
             </Button>
           </Box>
         </Box>
         
-        {/* Location info */}
-        {userLocation && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <LocationIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
-            <Typography variant="body2" color="text.secondary">
-              Showing alerts based on your location: 
-              approximately {userLocation.coordinates.latitude.toFixed(2)}, 
-              {userLocation.coordinates.longitude.toFixed(2)}
-            </Typography>
-          </Box>
-        )}
+        <Typography variant="body1" color="text.secondary" paragraph>
+          Stay informed about natural disasters and find nearby safety shelters. 
+          Data is updated regularly to provide the most current information.
+        </Typography>
         
-        {/* Database info */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <StorageIcon fontSize="small" sx={{ mr: 0.5, color: 'info.main' }} />
-          <Typography variant="body2" color="text.secondary">
-            Using real-time data from USGS Earthquake API and NASA EONET
-          </Typography>
-        </Box>
-        
-        {/* Add a badge for real-time data */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          mb: 2,
-          p: 1,
-          bgcolor: 'rgba(244, 67, 54, 0.1)',
-          borderRadius: 1,
-          border: '1px solid rgba(244, 67, 54, 0.3)'
-        }}>
-          <Chip 
-            label="LIVE DATA" 
-            color="error" 
-            size="small" 
-            sx={{ 
-              fontWeight: 'bold',
-              mr: 1,
-              animation: 'pulse 2s infinite'
-            }} 
-          />
-          <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'text.primary' }}>
-            Displaying real earthquake and disaster data from USGS and NASA APIs
-          </Typography>
-        </Box>
-        
-        {/* Export button */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<FileDownloadIcon />}
-            onClick={() => databaseExportService.exportToExcel(alerts, shelters)}
-            size="small"
-          >
-            Export All Data to CSV Files
-          </Button>
-          <Typography variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
-            (Exports alerts and shelters as separate CSV files for Excel)
-          </Typography>
-        </Box>
-        
-        {/* Error message */}
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
             {error}
           </Alert>
         )}
@@ -282,45 +213,35 @@ const HomePage: React.FC = () => {
       <Paper 
         elevation={2} 
         sx={{ 
-          p: 2, 
-          mb: 3, 
-          borderRadius: 2,
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            boxShadow: 6
-          }
+          mb: 4, 
+          height: '500px', 
+          borderRadius: '12px',
+          overflow: 'hidden'
         }}
       >
         <DisasterMap 
-          ref={mapRef}
           alerts={alerts}
           shelters={shelters}
-          userLocation={userLocation?.coordinates}
-          height="400px"
-          selectedAlertId={selectedAlertId}
+          height="500px"
+          width="100%"
           onAlertClick={handleAlertClick}
+          selectedAlertId={selectedAlertId}
+          ref={mapRef}
         />
       </Paper>
       
-      {/* Tabs */}
-      <Paper elevation={2} sx={{ mb: 3, borderRadius: 2 }}>
-        <Tabs 
-          value={activeTab} 
-          onChange={handleTabChange} 
-          aria-label="disaster information tabs"
-          variant="fullWidth"
-          textColor="primary"
-          indicatorColor="primary"
-        >
+      {/* Tabs for Alerts, Nearby Alerts, and Shelters */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+        <Tabs value={activeTab} onChange={handleTabChange} aria-label="disaster information tabs">
           <Tab 
             label={
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography sx={{ mr: 1 }}>Nearby Alerts</Typography>
+                <WarningIcon fontSize="small" sx={{ mr: 1 }} />
+                All Alerts
                 <Chip 
-                  label={nearbyAlerts.length} 
-                  color="primary" 
+                  label={alerts.length} 
                   size="small" 
-                  sx={{ height: 20, fontSize: '0.75rem' }} 
+                  sx={{ ml: 1, height: '20px', fontSize: '0.7rem' }} 
                 />
               </Box>
             } 
@@ -329,12 +250,13 @@ const HomePage: React.FC = () => {
           <Tab 
             label={
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography sx={{ mr: 1 }}>All Alerts</Typography>
+                <LocationIcon fontSize="small" sx={{ mr: 1 }} />
+                Nearby Alerts
                 <Chip 
-                  label={alerts.length} 
-                  color="primary" 
+                  label={nearbyAlerts.length} 
                   size="small" 
-                  sx={{ height: 20, fontSize: '0.75rem' }} 
+                  color="error"
+                  sx={{ ml: 1, height: '20px', fontSize: '0.7rem' }} 
                 />
               </Box>
             } 
@@ -343,143 +265,114 @@ const HomePage: React.FC = () => {
           <Tab 
             label={
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography sx={{ mr: 1 }}>Safety Shelters</Typography>
+                <LocationIcon fontSize="small" sx={{ mr: 1 }} />
+                Shelters
                 <Chip 
                   label={shelters.length} 
-                  color="primary" 
                   size="small" 
-                  sx={{ height: 20, fontSize: '0.75rem' }} 
+                  color="success"
+                  sx={{ ml: 1, height: '20px', fontSize: '0.7rem' }} 
                 />
               </Box>
             } 
             id="tab-2" 
           />
         </Tabs>
+      </Box>
+      
+      {/* Content based on selected tab */}
+      <Box sx={{ mb: 4 }}>
+        {/* All Alerts Tab */}
+        {activeTab === 0 && (
+          <Box>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Active Disaster Alerts
+            </Typography>
+            {alerts.length === 0 ? (
+              <Alert severity="info">No active alerts at this time.</Alert>
+            ) : (
+              <Grid container spacing={2}>
+                {alerts.map(alert => (
+                  <Grid item xs={12} md={6} key={alert.id}>
+                    <AlertCard 
+                      alert={alert}
+                      onClick={() => handleAlertClick(alert.id)}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Box>
+        )}
         
-        {/* Tab Content */}
-        <Box sx={{ p: 2 }}>
-          {/* Nearby Alerts Tab */}
-          {activeTab === 0 && (
-            <>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                <LocationIcon sx={{ mr: 1, color: 'primary.main' }} />
-                Alerts Near You
-                <Button
-                  variant="outlined"
-                  startIcon={<FileDownloadIcon />}
-                  size="small"
-                  onClick={() => databaseExportService.exportAlertsToCSV(nearbyAlerts)}
-                  sx={{ ml: 'auto' }}
-                >
-                  Export to Excel
-                </Button>
-              </Typography>
-              
-              {nearbyAlerts.length === 0 ? (
-                <Alert severity="info">
-                  No alerts found near your current location. Stay safe!
-                </Alert>
-              ) : (
-                <Grid container spacing={2}>
-                  {nearbyAlerts.map(alert => (
-                    <Grid item xs={12} md={6} key={alert.id}>
-                      <Box 
-                        onClick={() => handleAlertClick(alert.id)}
-                        sx={{ 
-                          cursor: 'pointer',
-                          transform: selectedAlertId === alert.id ? 'scale(1.02)' : 'none',
-                          boxShadow: selectedAlertId === alert.id ? '0 0 0 2px #2196f3' : 'none',
-                          transition: 'all 0.2s ease-in-out',
-                          borderRadius: '8px',
-                        }}
-                      >
-                        <AlertCard alert={alert} />
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
+        {/* Nearby Alerts Tab */}
+        {activeTab === 1 && (
+          <Box>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Alerts Near You
+              {userLocation && (
+                <Typography variant="body2" color="text.secondary" component="span" sx={{ ml: 1 }}>
+                  ({userLocation.name})
+                </Typography>
               )}
-            </>
-          )}
-          
-          {/* All Alerts Tab */}
-          {activeTab === 1 && (
-            <>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                <WarningIcon sx={{ mr: 1, color: 'primary.main' }} />
-                All Active Alerts
-                <Button
-                  variant="outlined"
-                  startIcon={<FileDownloadIcon />}
-                  size="small"
-                  onClick={() => databaseExportService.exportAlertsToCSV(alerts)}
-                  sx={{ ml: 'auto' }}
-                >
-                  Export to Excel
-                </Button>
-              </Typography>
-              
-              {alerts.length === 0 ? (
-                <Alert severity="info">
-                  No active alerts at this time. Stay safe!
-                </Alert>
-              ) : (
-                <Grid container spacing={2}>
-                  {alerts.map(alert => (
-                    <Grid item xs={12} md={6} key={alert.id}>
-                      <Box 
-                        onClick={() => handleAlertClick(alert.id)}
-                        sx={{ 
-                          cursor: 'pointer',
-                          transform: selectedAlertId === alert.id ? 'scale(1.02)' : 'none',
-                          boxShadow: selectedAlertId === alert.id ? '0 0 0 2px #2196f3' : 'none',
-                          transition: 'all 0.2s ease-in-out',
-                          borderRadius: '8px',
-                        }}
-                      >
-                        <AlertCard alert={alert} />
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
+            </Typography>
+            {nearbyAlerts.length === 0 ? (
+              <Alert severity="success">
+                No alerts reported in your area. You're in a safe location.
+              </Alert>
+            ) : (
+              <Grid container spacing={2}>
+                {nearbyAlerts.map(alert => (
+                  <Grid item xs={12} md={6} key={alert.id}>
+                    <AlertCard 
+                      alert={alert}
+                      onClick={() => handleAlertClick(alert.id)}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Box>
+        )}
+        
+        {/* Shelters Tab */}
+        {activeTab === 2 && (
+          <Box>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Safety Shelters
+              {userLocation && (
+                <Typography variant="body2" color="text.secondary" component="span" sx={{ ml: 1 }}>
+                  (Near {userLocation.name})
+                </Typography>
               )}
-            </>
-          )}
-          
-          {/* Shelters Tab */}
-          {activeTab === 2 && (
-            <>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                <LocationIcon sx={{ mr: 1, color: 'primary.main' }} />
-                Available Safety Shelters
-                <Button
-                  variant="outlined"
-                  startIcon={<FileDownloadIcon />}
-                  size="small"
-                  onClick={() => databaseExportService.exportSheltersToCSV(shelters)}
-                  sx={{ ml: 'auto' }}
-                >
-                  Export to Excel
-                </Button>
-              </Typography>
-              
-              {shelters.length === 0 ? (
-                <Alert severity="info">
-                  No safety shelters found in your area.
-                </Alert>
-              ) : (
-                <Grid container spacing={2}>
-                  {shelters.map(shelter => (
-                    <Grid item xs={12} md={6} lg={4} key={shelter.id}>
-                      <ShelterCard shelter={shelter} />
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </>
-          )}
-        </Box>
-      </Paper>
+            </Typography>
+            {shelters.length === 0 ? (
+              <Alert severity="info">
+                No shelters found in your area. Try expanding your search radius.
+              </Alert>
+            ) : (
+              <Grid container spacing={2}>
+                {shelters.map(shelter => (
+                  <Grid item xs={12} md={6} key={shelter.id}>
+                    <ShelterCard
+                      shelter={shelter}
+                      userLocation={userLocation ? userLocation.coordinates : undefined}
+                      onClick={() => {
+                        if (mapRef.current) {
+                          mapRef.current.flyToLocation(
+                            shelter.coordinates.latitude,
+                            shelter.coordinates.longitude
+                          );
+                        }
+                      }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

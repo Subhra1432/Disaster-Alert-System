@@ -16,7 +16,8 @@ export const locationService = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude
             },
-            accuracy: position.coords.accuracy
+            accuracy: position.coords.accuracy,
+            name: "Current Location"
           });
         },
         (error) => {
@@ -39,7 +40,8 @@ export const locationService = {
         latitude: 37.7749,
         longitude: -122.4194
       },
-      accuracy: 10
+      accuracy: 10,
+      name: "San Francisco, CA"
     };
   },
   
@@ -53,7 +55,8 @@ export const locationService = {
             latitude: 37.7749,
             longitude: -122.4194
           },
-          accuracy: 10
+          accuracy: 10,
+          name: "San Francisco, CA"
         });
       }, 500);
     });

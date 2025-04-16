@@ -59,50 +59,36 @@ const LocationMarker = ({
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const map = useMap();
-  const locationUpdateInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Only locate on first load, not on re-renders
-    if (position === null) {
-      map.locate({ setView: true, maxZoom: 13 });
-    }
+    map.locate({ setView: true, maxZoom: 13 });
     
     const locationHandler = (e: L.LocationEvent) => {
       const newPosition: [number, number] = [e.latlng.lat, e.latlng.lng];
+      setPosition(newPosition);
+      setAccuracy(e.accuracy);
       
-      // Only update position if it's changed significantly (more than 10 meters)
-      if (position === null || calculateDistance(
-          position[0], position[1], 
-          newPosition[0], newPosition[1]
-        ) > 0.01) {
-        setPosition(newPosition);
-        setAccuracy(e.accuracy);
+      map.flyTo(e.latlng, 13);
+      
+      if (onLocationFound) {
+        onLocationFound(newPosition);
+      }
+      
+      // Check if user is near any disaster
+      if (alerts && alerts.length > 0) {
+        const nearbyAlerts = alerts.filter(alert => {
+          const distance = calculateDistance(
+            newPosition[0], 
+            newPosition[1], 
+            alert.location.coordinates.latitude, 
+            alert.location.coordinates.longitude
+          );
+          // Consider alerts within 50km as "nearby"
+          return distance <= 50;
+        });
         
-        // Only fly to location on initial load, not on updates
-        if (position === null) {
-          map.flyTo(e.latlng, 13);
-        }
-        
-        if (onLocationFound) {
-          onLocationFound(newPosition);
-        }
-        
-        // Check if user is near any disaster
-        if (alerts && alerts.length > 0) {
-          const nearbyAlerts = alerts.filter(alert => {
-            const distance = calculateDistance(
-              newPosition[0], 
-              newPosition[1], 
-              alert.location.coordinates.latitude, 
-              alert.location.coordinates.longitude
-            );
-            // Consider alerts within 50km as "nearby"
-            return distance <= 50;
-          });
-          
-          if (nearbyAlerts.length > 0) {
-            onProximityAlert(nearbyAlerts);
-          }
+        if (nearbyAlerts.length > 0) {
+          onProximityAlert(nearbyAlerts);
         }
       }
     };
@@ -112,33 +98,10 @@ const LocationMarker = ({
       console.error('Error getting location:', e.message);
     });
 
-    // Set up periodic location updates at a lower frequency
-    if (locationUpdateInterval.current === null) {
-      locationUpdateInterval.current = setInterval(() => {
-        map.locate({ setView: false, maxZoom: 13 });
-      }, 60000); // Update every 60 seconds instead of 30
-    }
-
     return () => {
       map.off('locationfound', locationHandler);
-      if (locationUpdateInterval.current) {
-        clearInterval(locationUpdateInterval.current);
-        locationUpdateInterval.current = null;
-      }
     };
-  }, [map, position, alerts, onProximityAlert, onLocationFound]);
-
-  // Memoize the Circle component to prevent unnecessary re-renders
-  const LocationCircle = useMemo(() => {
-    if (!position) return null;
-    return (
-      <Circle 
-        center={position}
-        radius={accuracy || 500}
-        pathOptions={{ color: '#2196f3', fillColor: '#2196f3', fillOpacity: 0.1, weight: 1 }}
-      />
-    );
-  }, [position, accuracy]);
+  }, [map, alerts, onProximityAlert, onLocationFound]);
 
   return position === null ? null : (
     <>
@@ -149,7 +112,13 @@ const LocationMarker = ({
           Accuracy: {accuracy ? `±${Math.round(accuracy)} meters` : 'Unknown'}
         </Popup>
       </Marker>
-      {LocationCircle}
+      {accuracy && (
+        <Circle 
+          center={position}
+          radius={accuracy}
+          pathOptions={{ color: '#2196f3', fillColor: '#2196f3', fillOpacity: 0.1, weight: 1 }}
+        />
+      )}
     </>
   );
 };

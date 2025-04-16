@@ -37,6 +37,7 @@ export interface DisasterAlert {
 export interface UserLocation {
   coordinates: Coordinates;
   accuracy: number;
+  name: string;
 }
 
 export interface SafetyShelter {

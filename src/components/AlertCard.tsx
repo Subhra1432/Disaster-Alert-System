@@ -28,9 +28,10 @@ import {
 interface AlertCardProps {
   alert: DisasterAlert;
   compact?: boolean;
+  onClick?: () => void;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({ alert, compact = false }) => {
+const AlertCard: React.FC<AlertCardProps> = ({ alert, compact = false, onClick }) => {
   const navigate = useNavigate();
   const severityColor = getSeverityColor(alert.severity);
   const disasterIcon = getDisasterIcon(alert.type);
@@ -43,6 +44,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, compact = false }) => {
     <Paper 
       elevation={1}
       className="alert-card"
+      onClick={onClick}
       sx={{ 
         borderLeft: `5px solid ${severityColor}`,
         borderRadius: '8px',
@@ -52,7 +54,8 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, compact = false }) => {
         '&:hover': {
           boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
           transform: 'translateY(-4px)'
-        }
+        },
+        cursor: onClick ? 'pointer' : 'default'
       }}
     >
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>

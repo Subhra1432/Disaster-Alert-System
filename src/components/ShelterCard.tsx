@@ -15,15 +15,20 @@ import { SafetyShelter } from '../models/types';
 interface ShelterCardProps {
   shelter: SafetyShelter;
   elevation?: number;
+  userLocation?: { latitude: number; longitude: number };
+  onClick?: () => void;
 }
 
 const ShelterCard: React.FC<ShelterCardProps> = ({
   shelter,
-  elevation = 1
+  elevation = 1,
+  userLocation,
+  onClick
 }) => {
   return (
     <Card 
       elevation={elevation}
+      onClick={onClick}
       sx={{ 
         height: '100%', 
         display: 'flex', 
@@ -32,7 +37,8 @@ const ShelterCard: React.FC<ShelterCardProps> = ({
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: 6
-        }
+        },
+        cursor: onClick ? 'pointer' : 'default'
       }}
     >
       <CardContent sx={{ flexGrow: 1 }}>
