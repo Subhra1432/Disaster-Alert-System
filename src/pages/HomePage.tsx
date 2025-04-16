@@ -144,11 +144,6 @@ const HomePage: React.FC = () => {
           </Box>
         </Box>
         
-        <Typography variant="body1" color="text.secondary" paragraph>
-          Stay informed about natural disasters and find nearby safety shelters. 
-          Data is updated regularly to provide the most current information.
-        </Typography>
-        
         {error && (
           <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
             {error}
