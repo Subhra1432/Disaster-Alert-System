@@ -1,12 +1,15 @@
 {
   "files": {
-    "main.css": "/Disaster-Alert-System/static/css/main.888091d4.css",
-    "main.js": "/Disaster-Alert-System/static/js/main.2625760c.js",
-    "static/js/206.52449eee.chunk.js": "/Disaster-Alert-System/static/js/206.52449eee.chunk.js",
-    "index.html": "/Disaster-Alert-System/index.html"
+    "main.css": "/Disaster-Alert-System/static/css/main.3c35958d.css",
+    "main.js": "/Disaster-Alert-System/static/js/main.ddc85646.js",
+    "static/js/453.608c7a3d.chunk.js": "/Disaster-Alert-System/static/js/453.608c7a3d.chunk.js",
+    "index.html": "/Disaster-Alert-System/index.html",
+    "main.3c35958d.css.map": "/Disaster-Alert-System/static/css/main.3c35958d.css.map",
+    "main.ddc85646.js.map": "/Disaster-Alert-System/static/js/main.ddc85646.js.map",
+    "453.608c7a3d.chunk.js.map": "/Disaster-Alert-System/static/js/453.608c7a3d.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.888091d4.css",
-    "static/js/main.2625760c.js"
+    "static/css/main.3c35958d.css",
+    "static/js/main.ddc85646.js"
   ]
 }
