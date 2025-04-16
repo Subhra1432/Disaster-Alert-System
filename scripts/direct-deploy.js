@@ -84,7 +84,7 @@ async function deploy() {
     
     // Step 7: Copy the build folder to the temporary directory
     log('Copying build files to temp directory...', colors.blue);
-    exec(`cp -R ${path.join(__dirname, '../build/*')} ${tempDir}`);
+    exec(`cp -R ${path.join(__dirname, '../build/')}* ${tempDir}`);
     
     // Step 8: Initialize a Git repository in the temporary directory
     log('Initializing Git repository in temp directory...', colors.blue);
