@@ -9,9 +9,13 @@ import { getDatabaseService, getDatabaseType } from './services/databaseManager'
 // Include Leaflet CSS - make sure this is loaded before any components using Leaflet
 import 'leaflet/dist/leaflet.css';
 
+// Add console log to confirm real data source
+console.log('Starting application with data source:', getDatabaseType());
+
 // Initialize the database
 getDatabaseService().then(dbService => {
   console.log(`Database initialized: ${getDatabaseType()}`);
+  console.log('Database service methods:', Object.keys(dbService));
   
   // Render the app after database initialization
   const root = ReactDOM.createRoot(

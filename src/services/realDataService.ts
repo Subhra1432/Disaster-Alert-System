@@ -144,8 +144,26 @@ const convertEONETEventToAlert = (event: any): DisasterAlert | null => {
  */
 const fetchEarthquakes = async (): Promise<DisasterAlert[]> => {
   try {
+    console.log('%c🔴 LIVE DATA: Fetching real earthquake data from USGS API...' + new Date().toLocaleTimeString(), 'background: #222; color: #bada55; font-size: 14px;');
     const response = await fetch(USGS_EARTHQUAKE_API);
     const data = await response.json();
+    
+    console.log(`%c🔴 LIVE DATA: Successfully received data from USGS API. Found ${data.features.length} earthquakes. [${new Date().toLocaleTimeString()}]`, 'background: #222; color: #bada55; font-size: 14px;');
+    
+    // Print just the first earthquake data if available
+    if (data.features && data.features.length > 0) {
+      const sample = data.features[0];
+      console.log('%c🔴 SAMPLE EARTHQUAKE:', 'background: #222; color: #bada55; font-size: 14px;', {
+        id: sample.id,
+        place: sample.properties.place,
+        magnitude: sample.properties.mag,
+        time: new Date(sample.properties.time).toLocaleString(),
+        coordinates: {
+          latitude: sample.geometry.coordinates[1],
+          longitude: sample.geometry.coordinates[0]
+        }
+      });
+    }
     
     return data.features
       .map(convertUSGSEarthquakeToAlert)
@@ -161,8 +179,26 @@ const fetchEarthquakes = async (): Promise<DisasterAlert[]> => {
  */
 const fetchOtherDisasters = async (): Promise<DisasterAlert[]> => {
   try {
+    console.log('%c🔵 LIVE DATA: Fetching real disaster data from NASA EONET API...' + new Date().toLocaleTimeString(), 'background: #222; color: #00bfff; font-size: 14px;');
     const response = await fetch(`${NASA_EONET_API}?status=open`);
     const data = await response.json();
+    
+    console.log(`%c🔵 LIVE DATA: Successfully received data from NASA EONET API. Found ${data.events.length} events. [${new Date().toLocaleTimeString()}]`, 'background: #222; color: #00bfff; font-size: 14px;');
+    
+    // Print sample disaster data if available
+    if (data.events && data.events.length > 0) {
+      const sample = data.events[0];
+      console.log('%c🔵 SAMPLE DISASTER:', 'background: #222; color: #00bfff; font-size: 14px;', {
+        id: sample.id,
+        title: sample.title,
+        type: sample.categories[0].title,
+        location: sample.geometry && sample.geometry.length > 0 ? 
+          {
+            latitude: sample.geometry[0].coordinates[1],
+            longitude: sample.geometry[0].coordinates[0]
+          } : 'No coordinates'
+      });
+    }
     
     return data.events
       .map(convertEONETEventToAlert)

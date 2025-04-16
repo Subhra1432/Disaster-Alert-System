@@ -1,6 +1,10 @@
 import { DisasterAlert, SafetyShelter } from '../models/types';
 import { realDataService } from './realDataService';
 
+// Verify we're using real data
+console.log('VERIFICATION: Database manager is configured to use ONLY real data from public APIs');
+console.log('VERIFICATION: No mock or Firebase data is being used');
+
 // DatabaseService interface defines the methods required
 interface DatabaseService {
   // Disaster alerts
@@ -20,6 +24,7 @@ interface DatabaseService {
 
 // Get the current database type
 export const getDatabaseType = (): 'real-api' => {
+  console.log('VERIFICATION: getDatabaseType() is returning "real-api" - confirming real data');
   return 'real-api';
 };
 

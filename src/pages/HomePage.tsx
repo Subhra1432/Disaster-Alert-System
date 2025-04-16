@@ -64,6 +64,7 @@ const HomePage: React.FC = () => {
     try {
       // Get the database service
       const dbService = getDatabaseServiceSync();
+      console.log('Using database service:', getDatabaseType());
       
       // Update database type display
       setDatabaseType(getDatabaseType());
@@ -73,7 +74,12 @@ const HomePage: React.FC = () => {
       setUserLocation(location);
       
       // Get all alerts
+      console.log('Fetching real-time alerts...');
       const allAlerts = await dbService.getActiveAlerts();
+      console.log(`Received ${allAlerts.length} real-time alerts`);
+      if (allAlerts.length > 0) {
+        console.log('First alert:', allAlerts[0]);
+      }
       setAlerts(sortAlertsBySeverity(allAlerts));
       
       // Get alerts near user location
@@ -85,11 +91,16 @@ const HomePage: React.FC = () => {
       setNearbyAlerts(sortAlertsBySeverity(alertsNearby));
       
       // Get nearby shelters
+      console.log('Fetching shelters...');
       const nearbyShelters = await dbService.getNearbyShelters(
         location.coordinates.latitude,
         location.coordinates.longitude,
         100 // 100km radius
       );
+      console.log(`Received ${nearbyShelters.length} shelters`);
+      if (nearbyShelters.length > 0) {
+        console.log('First shelter:', nearbyShelters[0]);
+      }
       setShelters(nearbyShelters);
       
       // Show notifications for nearby alerts
@@ -219,18 +230,27 @@ const HomePage: React.FC = () => {
         </Box>
         
         {/* Add a badge for real-time data */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          mb: 2,
+          p: 1,
+          bgcolor: 'rgba(244, 67, 54, 0.1)',
+          borderRadius: 1,
+          border: '1px solid rgba(244, 67, 54, 0.3)'
+        }}>
           <Chip 
             label="LIVE DATA" 
             color="error" 
             size="small" 
             sx={{ 
               fontWeight: 'bold',
-              mr: 1
+              mr: 1,
+              animation: 'pulse 2s infinite'
             }} 
           />
-          <Typography variant="body2" color="text.secondary">
-            Displaying real earthquake and disaster data from around the world
+          <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'text.primary' }}>
+            Displaying real earthquake and disaster data from USGS and NASA APIs
           </Typography>
         </Box>
         
