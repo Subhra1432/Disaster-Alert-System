@@ -66,23 +66,12 @@ async function deploy() {
     // Simple 200.html file (for hosting providers that support it)
     writeFile(path.join('build', '200.html'), indexHtmlContent);
     
-    // Copy our custom build-index.html to the build directory as index.html
-    if (fs.existsSync('build-index.html')) {
-      log('Using custom index.html for build...', colors.blue);
-      // But first backup the original
-      fs.copyFileSync(
-        path.join('build', 'index.html'), 
-        path.join('build', 'app.html')
-      );
-      fs.copyFileSync(
-        'build-index.html', 
-        path.join('build', 'index.html')
-      );
-    }
+    // We're NOT using the fallback page since we want the actual app to load
+    // No longer replacing index.html with the fallback page
     
     // Fix paths in the index.html
     log('Fixing paths in HTML files...', colors.blue);
-    const htmlFiles = ['index.html', 'app.html', '200.html', '404.html'].filter(
+    const htmlFiles = ['index.html', '200.html', '404.html'].filter(
       file => fs.existsSync(path.join('build', file))
     );
     
