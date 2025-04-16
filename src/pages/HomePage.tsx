@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DisasterAlert, UserLocation, SafetyShelter } from '../models/types';
 import { locationService } from '../services/locationService';
-import { notificationService } from '../services/notificationService';
 import { sortAlertsBySeverity } from '../utils/alertUtils';
 import AlertCard from '../components/AlertCard';
 import DisasterMap from '../components/DisasterMap';
@@ -17,17 +16,12 @@ import {
   Tab, 
   Grid, 
   Chip,
-  Alert, 
-  IconButton,
-  Tooltip
+  Alert
 } from '@mui/material';
 import { 
   Refresh as RefreshIcon,
-  Notifications as NotificationsIcon, 
-  NotificationsOff as NotificationsOffIcon,
   LocationOn as LocationIcon,
-  Warning as WarningIcon,
-  Storage as StorageIcon
+  Warning as WarningIcon
 } from '@mui/icons-material';
 
 const HomePage: React.FC = () => {
@@ -38,7 +32,6 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [databaseType, setDatabaseType] = useState<string>('mock');
   const mapRef = useRef<any>(null);
@@ -83,34 +76,11 @@ const HomePage: React.FC = () => {
         2000 // 2000km radius - increased to show global data
       );
       setShelters(nearbyShelters);
-      
-      // Show notifications for nearby alerts
-      if (notificationsEnabled) {
-        alertsNearby.forEach(alert => {
-          notificationService.showAlertNotification(alert);
-        });
-      }
     } catch (err) {
       setError('Failed to load disaster data. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
-    }
-  };
-  
-  // Toggle notifications
-  const toggleNotifications = async () => {
-    if (!notificationsEnabled) {
-      const granted = await notificationService.requestPermission();
-      setNotificationsEnabled(granted);
-      if (granted && nearbyAlerts.length > 0) {
-        // Show notifications for current alerts
-        nearbyAlerts.forEach(alert => {
-          notificationService.showAlertNotification(alert);
-        });
-      }
-    } else {
-      setNotificationsEnabled(false);
     }
   };
   
@@ -163,20 +133,6 @@ const HomePage: React.FC = () => {
             Disaster Alert System
           </Typography>
           <Box>
-            <Tooltip title={`Using mock data`}>
-              <IconButton sx={{ mr: 1 }}>
-                <StorageIcon color="info" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={notificationsEnabled ? "Disable notifications" : "Enable notifications"}>
-              <IconButton 
-                onClick={toggleNotifications}
-                color={notificationsEnabled ? "primary" : "default"}
-                sx={{ mr: 1 }}
-              >
-                {notificationsEnabled ? <NotificationsIcon /> : <NotificationsOffIcon />}
-              </IconButton>
-            </Tooltip>
             <Button
               variant="contained"
               startIcon={<RefreshIcon />}
