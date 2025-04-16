@@ -1,9 +1,9 @@
 import { DisasterAlert, SafetyShelter } from '../models/types';
 import { disasterService } from './disasterApi';
 
-// Verify we're using real data
-console.log('VERIFICATION: Database manager is configured to use ONLY real data from public APIs');
-console.log('VERIFICATION: No mock or Firebase data is being used');
+// Log database configuration clearly
+console.log('Database manager is configured to use mock data');
+console.log('No Firebase database is being used in this deployment');
 
 // DatabaseService interface defines the methods required
 interface DatabaseService {
@@ -40,6 +40,7 @@ let databaseServiceInstance: DatabaseService | null = null;
 export const getDatabaseServiceSync = (): DatabaseService => {
   if (!databaseServiceInstance) {
     databaseServiceInstance = disasterService;
+    console.log('Database service initialized with mock data');
   }
   return databaseServiceInstance;
 };
@@ -47,5 +48,6 @@ export const getDatabaseServiceSync = (): DatabaseService => {
 // Export a function to reinitialize the database if needed
 export const reinitializeDatabase = async (): Promise<DatabaseService> => {
   databaseServiceInstance = disasterService;
+  console.log('Database service reinitialized with mock data');
   return disasterService;
 }; 

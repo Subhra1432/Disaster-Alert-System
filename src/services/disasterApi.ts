@@ -1,29 +1,5 @@
 import { DisasterAlert, DisasterType, AlertSeverity, SafetyShelter } from '../models/types';
-import { db } from './firebase';
-import { 
-  collection, 
-  getDocs, 
-  getDoc, 
-  doc, 
-  query, 
-  where, 
-  addDoc, 
-  updateDoc,
-  deleteDoc,
-  GeoPoint,
-  serverTimestamp
-} from 'firebase/firestore';
 import { calculateDistance } from '../utils/locationUtils';
-
-// Check if Firebase is configured properly
-const isFirebaseConfigured = () => {
-  try {
-    return db !== undefined && process.env.REACT_APP_USE_FIREBASE === 'true';
-  } catch (e) {
-    console.warn('Firebase not properly configured, using mock data');
-    return false;
-  }
-};
 
 // Mock disaster data
 const mockDisasters: DisasterAlert[] = [
@@ -173,230 +149,81 @@ const mockShelters: SafetyShelter[] = [
   }
 ];
 
-// Helper function to convert Firestore document to DisasterAlert
-const convertFirestoreAlertDoc = (doc: any): DisasterAlert => {
-  const data = doc.data();
-  return {
-    id: doc.id,
-    type: data.type,
-    severity: data.severity,
-    title: data.title,
-    description: data.description,
-    location: {
-      name: data.location.name,
-      coordinates: {
-        latitude: data.location.coordinates.latitude || data.location.coordinates._lat,
-        longitude: data.location.coordinates.longitude || data.location.coordinates._long
-      }
-    },
-    safetyTips: data.safetyTips,
-    timestamp: data.timestamp?.toDate?.() ? data.timestamp.toDate().toISOString() : new Date().toISOString(),
-    radius: data.radius,
-    active: data.active
-  };
-};
-
-// Helper function to convert Firestore document to SafetyShelter
-const convertFirestoreShelterDoc = (doc: any): SafetyShelter => {
-  const data = doc.data();
-  return {
-    id: doc.id,
-    name: data.name,
-    coordinates: {
-      latitude: data.coordinates.latitude || data.coordinates._lat,
-      longitude: data.coordinates.longitude || data.coordinates._long
-    },
-    address: data.address,
-    capacity: data.capacity,
-    available: data.available
-  };
-};
-
-// API service
+// API service with mock data (Firebase removed)
 export const disasterService = {
   // Get all active disaster alerts
   getActiveAlerts: async (): Promise<DisasterAlert[]> => {
-    if (isFirebaseConfigured()) {
-      try {
-        const alertsQuery = query(
-          collection(db, 'disasters'),
-          where('active', '==', true)
-        );
-        const querySnapshot = await getDocs(alertsQuery);
-        return querySnapshot.docs.map(convertFirestoreAlertDoc);
-      } catch (error) {
-        console.error('Error fetching alerts from Firestore:', error);
-        return mockDisasters.filter(disaster => disaster.active);
-      }
-    } else {
-      // Use mock data
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(mockDisasters.filter(disaster => disaster.active));
-        }, 500);
-      });
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(mockDisasters.filter(disaster => disaster.active));
+      }, 500);
+    });
   },
 
   // Get alerts near a specific location
   getAlertsNearLocation: async (latitude: number, longitude: number, radiusKm: number = 200): Promise<DisasterAlert[]> => {
-    if (isFirebaseConfigured()) {
-      try {
-        // Fetch all active alerts
-        const alertsQuery = query(
-          collection(db, 'disasters'),
-          where('active', '==', true)
-        );
-        const querySnapshot = await getDocs(alertsQuery);
-        const allAlerts = querySnapshot.docs.map(convertFirestoreAlertDoc);
-        
-        // Filter by distance (Firestore doesn't support geospatial queries directly in the free tier)
-        return allAlerts.filter(alert => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const nearbyAlerts = mockDisasters.filter(disaster => {
+          // Check if active and within specified radius
+          if (!disaster.active) return false;
+          
           const distance = calculateDistance(
             latitude,
             longitude,
-            alert.location.coordinates.latitude,
-            alert.location.coordinates.longitude
+            disaster.location.coordinates.latitude,
+            disaster.location.coordinates.longitude
           );
           return distance <= radiusKm;
         });
-      } catch (error) {
-        console.error('Error fetching nearby alerts from Firestore:', error);
-        return mockDisasters.filter(disaster => disaster.active);
-      }
-    } else {
-      // Use mock data
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const nearbyAlerts = mockDisasters.filter(disaster => {
-            // Simple distance calculation for demo
-            return disaster.active;
-          });
-          resolve(nearbyAlerts);
-        }, 500);
-      });
-    }
+        resolve(nearbyAlerts);
+      }, 500);
+    });
   },
 
   // Get a specific alert by ID
   getAlertById: async (id: string): Promise<DisasterAlert | null> => {
-    if (isFirebaseConfigured()) {
-      try {
-        const alertDoc = await getDoc(doc(db, 'disasters', id));
-        if (alertDoc.exists()) {
-          return convertFirestoreAlertDoc(alertDoc);
-        }
-        return null;
-      } catch (error) {
-        console.error('Error fetching alert by ID from Firestore:', error);
-        const mockAlert = mockDisasters.find(d => d.id === id);
-        return mockAlert || null;
-      }
-    } else {
-      // Use mock data
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const alert = mockDisasters.find(d => d.id === id);
-          resolve(alert || null);
-        }, 300);
-      });
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const alert = mockDisasters.find(d => d.id === id);
+        resolve(alert || null);
+      }, 300);
+    });
   },
 
   // Add a new disaster alert
   addAlert: async (alert: Omit<DisasterAlert, 'id'>): Promise<string> => {
-    if (isFirebaseConfigured()) {
-      try {
-        const alertData = {
-          ...alert,
-          location: {
-            ...alert.location,
-            coordinates: new GeoPoint(
-              alert.location.coordinates.latitude,
-              alert.location.coordinates.longitude
-            )
-          },
-          timestamp: serverTimestamp()
-        };
-        
-        const docRef = await addDoc(collection(db, 'disasters'), alertData);
-        return docRef.id;
-      } catch (error) {
-        console.error('Error adding alert to Firestore:', error);
-        throw error;
-      }
-    } else {
-      // Mock adding data
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const newId = (mockDisasters.length + 1).toString();
-          resolve(newId);
-        }, 300);
-      });
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newId = (mockDisasters.length + 1).toString();
+        resolve(newId);
+      }, 300);
+    });
   },
 
   // Update an existing disaster alert
   updateAlert: async (id: string, alertData: Partial<DisasterAlert>): Promise<void> => {
-    if (isFirebaseConfigured()) {
-      try {
-        // Handle coordinates GeoPoint if provided
-        let dataToUpdate = { ...alertData };
-        
-        if (alertData.location?.coordinates) {
-          dataToUpdate.location = {
-            ...alertData.location,
-            coordinates: new GeoPoint(
-              alertData.location.coordinates.latitude,
-              alertData.location.coordinates.longitude
-            )
-          };
-        }
-        
-        await updateDoc(doc(db, 'disasters', id), dataToUpdate);
-      } catch (error) {
-        console.error('Error updating alert in Firestore:', error);
-        throw error;
-      }
-    } else {
-      // Mock update
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, 300);
-      });
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 300);
+    });
   },
 
   // Delete a disaster alert
   deleteAlert: async (id: string): Promise<void> => {
-    if (isFirebaseConfigured()) {
-      try {
-        await deleteDoc(doc(db, 'disasters', id));
-      } catch (error) {
-        console.error('Error deleting alert from Firestore:', error);
-        throw error;
-      }
-    } else {
-      // Mock delete
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, 300);
-      });
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 300);
+    });
   },
 
   // Get nearby shelters
   getNearbyShelters: async (latitude: number, longitude: number, radiusKm: number = 50): Promise<SafetyShelter[]> => {
-    if (isFirebaseConfigured()) {
-      try {
-        // Fetch all shelters
-        const sheltersSnapshot = await getDocs(collection(db, 'shelters'));
-        const allShelters = sheltersSnapshot.docs.map(convertFirestoreShelterDoc);
-        
-        // Filter by distance
-        return allShelters.filter(shelter => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const nearbyShelters = mockShelters.filter(shelter => {
           const distance = calculateDistance(
             latitude,
             longitude,
@@ -405,95 +232,37 @@ export const disasterService = {
           );
           return distance <= radiusKm;
         });
-      } catch (error) {
-        console.error('Error fetching shelters from Firestore:', error);
-        return mockShelters;
-      }
-    } else {
-      // Use mock data
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(mockShelters);
-        }, 500);
-      });
-    }
+        resolve(nearbyShelters);
+      }, 500);
+    });
   },
 
   // Add a new shelter
   addShelter: async (shelter: Omit<SafetyShelter, 'id'>): Promise<string> => {
-    if (isFirebaseConfigured()) {
-      try {
-        const shelterData = {
-          ...shelter,
-          coordinates: new GeoPoint(
-            shelter.coordinates.latitude,
-            shelter.coordinates.longitude
-          )
-        };
-        
-        const docRef = await addDoc(collection(db, 'shelters'), shelterData);
-        return docRef.id;
-      } catch (error) {
-        console.error('Error adding shelter to Firestore:', error);
-        throw error;
-      }
-    } else {
-      // Mock adding data
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const newId = (mockShelters.length + 1).toString();
-          resolve(newId);
-        }, 300);
-      });
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newId = (mockShelters.length + 1).toString();
+        resolve(newId);
+      }, 300);
+    });
   },
 
   // Update a shelter
   updateShelter: async (id: string, shelterData: Partial<SafetyShelter>): Promise<void> => {
-    if (isFirebaseConfigured()) {
-      try {
-        // Handle coordinates GeoPoint if provided
-        let dataToUpdate = { ...shelterData };
-        
-        if (shelterData.coordinates) {
-          dataToUpdate.coordinates = new GeoPoint(
-            shelterData.coordinates.latitude,
-            shelterData.coordinates.longitude
-          );
-        }
-        
-        await updateDoc(doc(db, 'shelters', id), dataToUpdate);
-      } catch (error) {
-        console.error('Error updating shelter in Firestore:', error);
-        throw error;
-      }
-    } else {
-      // Mock update
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, 300);
-      });
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 300);
+    });
   },
 
   // Delete a shelter
   deleteShelter: async (id: string): Promise<void> => {
-    if (isFirebaseConfigured()) {
-      try {
-        await deleteDoc(doc(db, 'shelters', id));
-      } catch (error) {
-        console.error('Error deleting shelter from Firestore:', error);
-        throw error;
-      }
-    } else {
-      // Mock delete
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, 300);
-      });
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 300);
+    });
   },
 
   // AI severity classifier (mock function)
