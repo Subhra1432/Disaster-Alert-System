@@ -5,7 +5,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import { DisasterAlert, SafetyShelter, Coordinates, AlertSeverity } from '../models/types';
 import { getSeverityColor, getDisasterIcon, getSeverityLabel } from '../utils/alertUtils';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { calculateDistance, getDistanceDescription } from '../utils/locationUtils';
@@ -257,11 +257,11 @@ const DisasterMap = forwardRef<any, DisasterMapProps>(({
   const lowAlerts = alerts.filter(alert => alert.severity === AlertSeverity.LOW);
   
   // Create custom marker icons based on severity
-  const createAlertIcon = (severity: AlertSeverity) => {
+  const createAlertIcon = (severity: AlertSeverity, type: string) => {
     const color = getSeverityColor(severity).replace('#', '');
     return L.divIcon({
       className: 'custom-div-icon',
-      html: `<div style="background-color: #${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+      html: `<div style="background-color: #${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 10px;" title="${type}">${type.charAt(0)}</div>`,
       iconSize: [20, 20],
       iconAnchor: [10, 10]
     });
@@ -337,11 +337,17 @@ const DisasterMap = forwardRef<any, DisasterMapProps>(({
           <Marker
             key={alert.id}
             position={[alert.location.coordinates.latitude, alert.location.coordinates.longitude] as [number, number]}
-            icon={createAlertIcon(alert.severity)}
+            icon={createAlertIcon(alert.severity, alert.type)}
             eventHandlers={{
               click: () => onAlertClick && onAlertClick(alert.id)
             }}
           >
+            {/* Disaster name label */}
+            {(isSelected || isNearby) && (
+              <Tooltip permanent direction="top" offset={[0, -10]}>
+                <span style={{ fontWeight: 'bold' }}>{alert.title}</span>
+              </Tooltip>
+            )}
             {(isNearby || isSelected) && (
               <Circle 
                 center={[alert.location.coordinates.latitude, alert.location.coordinates.longitude] as [number, number]}

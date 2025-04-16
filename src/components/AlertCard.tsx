@@ -29,9 +29,10 @@ interface AlertCardProps {
   alert: DisasterAlert;
   compact?: boolean;
   onClick?: () => void;
+  showTypeLabel?: boolean;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({ alert, compact = false, onClick }) => {
+const AlertCard: React.FC<AlertCardProps> = ({ alert, compact = false, onClick, showTypeLabel = false }) => {
   const navigate = useNavigate();
   const severityColor = getSeverityColor(alert.severity);
   const disasterIcon = getDisasterIcon(alert.type);
@@ -65,15 +66,30 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, compact = false, onClick }
           </span>
           {alert.title}
         </Typography>
-        <Chip
-          label={getSeverityLabel(alert.severity)}
-          sx={{
-            bgcolor: severityColor,
-            color: 'white',
-            fontWeight: 'bold',
-            '& .MuiChip-label': { px: 1 }
-          }}
-        />
+        <Box>
+          {showTypeLabel && (
+            <Chip
+              label={alert.type.replace('_', ' ')}
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'white',
+                mr: 1,
+                fontWeight: 'bold',
+                '& .MuiChip-label': { px: 1 }
+              }}
+              size="small"
+            />
+          )}
+          <Chip
+            label={getSeverityLabel(alert.severity)}
+            sx={{
+              bgcolor: severityColor,
+              color: 'white',
+              fontWeight: 'bold',
+              '& .MuiChip-label': { px: 1 }
+            }}
+          />
+        </Box>
       </Box>
       
       <Box display="flex" alignItems="center" gap={2} mb={1.5}>

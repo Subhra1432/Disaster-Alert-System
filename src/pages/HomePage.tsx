@@ -297,6 +297,7 @@ const HomePage: React.FC = () => {
                     <AlertCard 
                       alert={alert}
                       onClick={() => handleAlertClick(alert.id)}
+                      showTypeLabel={true}
                     />
                   </Grid>
                 ))}
@@ -327,6 +328,7 @@ const HomePage: React.FC = () => {
                     <AlertCard 
                       alert={alert}
                       onClick={() => handleAlertClick(alert.id)}
+                      showTypeLabel={true}
                     />
                   </Grid>
                 ))}
