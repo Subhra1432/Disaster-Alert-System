@@ -3,6 +3,7 @@ import { DisasterAlert, UserLocation, SafetyShelter } from '../models/types';
 import { locationService } from '../services/locationService';
 import { notificationService } from '../services/notificationService';
 import { sortAlertsBySeverity } from '../utils/alertUtils';
+import { databaseExportService } from '../utils/excelExport';
 import AlertCard from '../components/AlertCard';
 import DisasterMap from '../components/DisasterMap';
 import ShelterCard from '../components/ShelterCard';
@@ -32,7 +33,8 @@ import {
   LocationOn as LocationIcon,
   DirectionsRun as DirectionsIcon,
   Warning as WarningIcon,
-  Storage as StorageIcon
+  Storage as StorageIcon,
+  FileDownload as FileDownloadIcon
 } from '@mui/icons-material';
 
 const HomePage: React.FC = () => {
@@ -45,7 +47,7 @@ const HomePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
-  const [databaseType, setDatabaseType] = useState<'firebase' | 'sqlite'>(getDatabaseType());
+  const [databaseType, setDatabaseType] = useState<string>('real-api');
   const mapRef = useRef<any>(null);
   const theme = useTheme();
   
@@ -210,9 +212,41 @@ const HomePage: React.FC = () => {
         
         {/* Database info */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <StorageIcon fontSize="small" sx={{ mr: 0.5, color: databaseType === 'firebase' ? 'error.main' : 'info.main' }} />
+          <StorageIcon fontSize="small" sx={{ mr: 0.5, color: 'info.main' }} />
           <Typography variant="body2" color="text.secondary">
-            Using {databaseType === 'firebase' ? 'Firebase' : 'SQLite'} database for data storage
+            Using real-time data from USGS Earthquake API and NASA EONET
+          </Typography>
+        </Box>
+        
+        {/* Add a badge for real-time data */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <Chip 
+            label="LIVE DATA" 
+            color="error" 
+            size="small" 
+            sx={{ 
+              fontWeight: 'bold',
+              mr: 1
+            }} 
+          />
+          <Typography variant="body2" color="text.secondary">
+            Displaying real earthquake and disaster data from around the world
+          </Typography>
+        </Box>
+        
+        {/* Export button */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<FileDownloadIcon />}
+            onClick={() => databaseExportService.exportToExcel(alerts, shelters)}
+            size="small"
+          >
+            Export All Data to CSV Files
+          </Button>
+          <Typography variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
+            (Exports alerts and shelters as separate CSV files for Excel)
           </Typography>
         </Box>
         
@@ -310,6 +344,15 @@ const HomePage: React.FC = () => {
               <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                 <LocationIcon sx={{ mr: 1, color: 'primary.main' }} />
                 Alerts Near You
+                <Button
+                  variant="outlined"
+                  startIcon={<FileDownloadIcon />}
+                  size="small"
+                  onClick={() => databaseExportService.exportAlertsToCSV(nearbyAlerts)}
+                  sx={{ ml: 'auto' }}
+                >
+                  Export to Excel
+                </Button>
               </Typography>
               
               {nearbyAlerts.length === 0 ? (
@@ -345,6 +388,15 @@ const HomePage: React.FC = () => {
               <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                 <WarningIcon sx={{ mr: 1, color: 'primary.main' }} />
                 All Active Alerts
+                <Button
+                  variant="outlined"
+                  startIcon={<FileDownloadIcon />}
+                  size="small"
+                  onClick={() => databaseExportService.exportAlertsToCSV(alerts)}
+                  sx={{ ml: 'auto' }}
+                >
+                  Export to Excel
+                </Button>
               </Typography>
               
               {alerts.length === 0 ? (
@@ -380,6 +432,15 @@ const HomePage: React.FC = () => {
               <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                 <LocationIcon sx={{ mr: 1, color: 'primary.main' }} />
                 Available Safety Shelters
+                <Button
+                  variant="outlined"
+                  startIcon={<FileDownloadIcon />}
+                  size="small"
+                  onClick={() => databaseExportService.exportSheltersToCSV(shelters)}
+                  sx={{ ml: 'auto' }}
+                >
+                  Export to Excel
+                </Button>
               </Typography>
               
               {shelters.length === 0 ? (

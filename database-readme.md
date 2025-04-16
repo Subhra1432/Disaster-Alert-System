@@ -97,6 +97,52 @@ Both database implementations share the same data structure:
 - Ideal for development, testing, or offline use
 - Database is initialized with sample data on first use
 
+## Exporting Data to Excel
+
+The Disaster Alert System includes functionality to export database data to CSV files that can be opened in Excel or other spreadsheet applications.
+
+### Export Features
+
+- Export alert data to CSV: Exports all disaster alerts with their details
+- Export shelter data to CSV: Exports all safety shelters with their details
+- CSV files are automatically downloaded to your device
+- Each export includes a timestamp in the filename
+- All data fields are properly formatted and escaped for CSV compatibility
+
+### How to Export
+
+1. Navigate to the Dashboard page
+2. In the Alerts tab, click the "Export to Excel" button to export all alerts
+3. In the Shelters tab, click the "Export to Excel" button to export all shelters
+4. Alternatively, click the "Export All Data to CSV Files" button to download both datasets as separate CSV files
+5. The CSV files will be automatically downloaded to your default download location
+
+### CSV File Format
+
+The exported CSV files can be directly opened in Excel, Google Sheets, or any other spreadsheet application. The files include:
+
+- Proper headers for all columns
+- Formatted data values for each record
+- Proper escaping of special characters (commas, quotes, etc.)
+- Automatic handling of nested data structures
+
+### Advanced Export Options
+
+For developers, the application includes export functionality that can be used programmatically:
+
+```typescript
+import { databaseExportService } from '../utils/excelExport';
+
+// Export alerts to CSV
+databaseExportService.exportAlertsToCSV(alerts);
+
+// Export shelters to CSV
+databaseExportService.exportSheltersToCSV(shelters);
+
+// Export both as separate CSV files
+databaseExportService.exportToExcel(alerts, shelters);
+```
+
 ## API
 
 Both implementations provide the same API through the database service:

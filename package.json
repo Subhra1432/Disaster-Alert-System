@@ -52,6 +52,11 @@
     "@types/leaflet": "^1.9.17",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
-    "@types/sql.js": "^1.4.9"
+    "@types/sql.js": "^1.4.9",
+    "@types/xlsx": "^0.0.36",
+    "xlsx": "^0.18.5"
+  },
+  "optionalDependencies": {
+    "xlsx": "^0.18.5"
   }
 }
