@@ -26,6 +26,7 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
+    "deploy-gh": "node scripts/deploy-to-gh-pages.js",
     "setup-db": "node init-database.js",
     "postinstall": "echo 'Installation complete! Run \"npm run setup-db\" to configure your database.'"
   },

@@ -11,31 +11,25 @@
       content="Real-time disaster alert system"
     />
     <title>Disaster Alert System</title>
-    <!-- Start Single Page Apps for GitHub Pages -->
+    <!-- GitHub Pages fix for single page applications -->
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages
-      // MIT License
-      // https://github.com/rafgraph/spa-github-pages
-      (function(l) {
-        if (l.search.indexOf('?p=/') === 0) {
-          var decoded = l.search.slice(4).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&')
-          }).join('?');
-          window.history.replaceState(null, null,
-            l.pathname.slice(0, -1) + (decoded.length ? '?' + decoded : '') +
-            l.hash
-          );
-        } else if (l.search[1] === '/') {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&')
-          }).join('?');
-          window.history.replaceState(null, null,
-            l.pathname + (decoded.length ? '?' + decoded : '') + l.hash
+      // This script helps with GitHub Pages and SPA routing
+      (function() {
+        // Redirect to hash-based routing from path-based routing
+        var path = window.location.pathname.replace(/^\/Disaster-Alert-System/, '');
+        if (path !== '/' && path !== '/index.html' && !window.location.hash) {
+          // For paths like /some/path, replace with /#/some/path
+          window.location.replace(
+            window.location.protocol + '//' + 
+            window.location.hostname + 
+            (window.location.port ? ':' + window.location.port : '') +
+            window.location.pathname.split('/').slice(0, 1).join('/') + 
+            '/#' + path +
+            window.location.search
           );
         }
-      }(window.location))
+      })();
     </script>
-    <!-- End Single Page Apps for GitHub Pages -->
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
