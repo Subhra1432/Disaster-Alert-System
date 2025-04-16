@@ -11,6 +11,7 @@ import {
   Typography, 
   Box,
   Paper, 
+  Button,
   CircularProgress, 
   Tabs, 
   Tab, 
@@ -21,6 +22,7 @@ import {
   Tooltip
 } from '@mui/material';
 import { 
+  Refresh as RefreshIcon,
   Notifications as NotificationsIcon, 
   NotificationsOff as NotificationsOffIcon,
   LocationOn as LocationIcon,
@@ -170,10 +172,19 @@ const HomePage: React.FC = () => {
               <IconButton 
                 onClick={toggleNotifications}
                 color={notificationsEnabled ? "primary" : "default"}
+                sx={{ mr: 1 }}
               >
                 {notificationsEnabled ? <NotificationsIcon /> : <NotificationsOffIcon />}
               </IconButton>
             </Tooltip>
+            <Button
+              variant="contained"
+              startIcon={<RefreshIcon />}
+              onClick={fetchAllData}
+              sx={{ mr: 1 }}
+            >
+              Refresh Data
+            </Button>
           </Box>
         </Box>
         
