@@ -11,21 +11,7 @@
       content="Real-time disaster alert system"
     />
     <title>Disaster Alert System</title>
-    <script>
-      // Simple redirect script for GitHub Pages
-      (function() {
-        var loc = window.location;
-        if (loc.hostname.includes('github.io') && 
-            loc.pathname.split('/').length > 2 && 
-            !loc.hash && 
-            !loc.pathname.endsWith('/')) {
-          var pathParts = loc.pathname.split('/').filter(Boolean);
-          var repo = pathParts[1]; // repository name
-          var route = pathParts.slice(1).join('/');
-          window.location.replace(loc.origin + '/' + repo + '/#/' + route);
-        }
-      })();
-    </script>
+    <script src="%PUBLIC_URL%/redirect.js"></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
