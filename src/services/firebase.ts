@@ -41,5 +41,25 @@ try {
   console.error("Error initializing Firebase:", error);
 }
 
+// Mock firebase.ts file that provides placeholder values
+// This prevents errors when Firebase imports are encountered in the code
+
+// Log that Firebase is not being used
+console.log('NOTICE: Firebase is not configured. Using mock implementation.');
+
+// Create mock empty objects for Firebase services
+export const mockDb = null;
+export const mockAuth = null;
+export const mockStorage = null;
+
+// Export helper function to check if Firebase is configured
+export const isFirebaseConfigured = () => false;
+
+// Export function to verify Firebase app initialization
+export const verifyFirebaseSetup = () => {
+  console.log('Firebase integration is disabled in this deployment');
+  return false;
+};
+
 export { db, auth, storage };
 export default app; 

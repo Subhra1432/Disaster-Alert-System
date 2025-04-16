@@ -100,7 +100,7 @@ async function deploy() {
     
     // Step 10: Force push to the gh-pages branch
     log('Pushing to gh-pages branch...', colors.magenta);
-    exec('git push -f https://github.com/Subhra1432/Disaster-Alert-System.git master:gh-pages');
+    exec('git push -f https://github.com/Subhra1432/Disaster-Alert-System.git main:gh-pages');
     
     // Step 11: Clean up
     log('Cleaning up...', colors.yellow);

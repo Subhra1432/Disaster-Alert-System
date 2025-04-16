@@ -102,6 +102,66 @@ const mockDisasters: DisasterAlert[] = [
     timestamp: '2023-12-05T05:30:00.000Z',
     radius: 150,
     active: true
+  },
+  {
+    id: '6',
+    type: DisasterType.FLOOD,
+    severity: AlertSeverity.HIGH,
+    title: 'Monsoon Flooding',
+    description: 'Severe flooding in Kerala due to intense monsoon rainfall',
+    location: {
+      name: 'Kochi, Kerala, India',
+      coordinates: { latitude: 9.9312, longitude: 76.2673 }
+    },
+    safetyTips: [
+      'Evacuate to designated relief camps',
+      'Stay away from floodwaters which may be contaminated',
+      'Keep essential medicines and documents in waterproof containers',
+      'Follow instructions from local disaster management authorities'
+    ],
+    timestamp: '2023-07-18T06:15:00.000Z',
+    radius: 80,
+    active: true
+  },
+  {
+    id: '7',
+    type: DisasterType.EARTHQUAKE,
+    severity: AlertSeverity.MEDIUM,
+    title: 'Earthquake in Himalayan Region',
+    description: '5.8 magnitude earthquake reported in Northern India',
+    location: {
+      name: 'Dehradun, Uttarakhand, India',
+      coordinates: { latitude: 30.3165, longitude: 78.0322 }
+    },
+    safetyTips: [
+      'Stay away from buildings with visible damage',
+      'Be prepared for aftershocks',
+      'Keep emergency supplies handy',
+      'Listen to local radio for updates and instructions'
+    ],
+    timestamp: '2023-11-28T04:45:00.000Z',
+    radius: 60,
+    active: true
+  },
+  {
+    id: '8',
+    type: DisasterType.HURRICANE,
+    severity: AlertSeverity.CRITICAL,
+    title: 'Cyclone Approaching Eastern Coast',
+    description: 'Super Cyclone with wind speeds over 200 km/h approaching Odisha coast',
+    location: {
+      name: 'Bhubaneswar, Odisha, India',
+      coordinates: { latitude: 20.2961, longitude: 85.8245 }
+    },
+    safetyTips: [
+      'Move to designated cyclone shelters immediately',
+      'Secure loose items outside your home',
+      'Keep emergency kit ready with food, water, and medicines',
+      'Stay informed through official weather updates'
+    ],
+    timestamp: '2023-06-08T11:30:00.000Z',
+    radius: 180,
+    active: true
   }
 ];
 
@@ -145,6 +205,38 @@ const mockShelters: SafetyShelter[] = [
     coordinates: { latitude: 21.3169, longitude: -157.8583 },
     address: '555 Palm Ave, Honolulu, HI',
     capacity: 600,
+    available: true
+  },
+  {
+    id: '6',
+    name: 'Kerala State Relief Camp',
+    coordinates: { latitude: 9.9389, longitude: 76.2569 },
+    address: 'Government School, Ernakulam, Kerala, India',
+    capacity: 350,
+    available: true
+  },
+  {
+    id: '7',
+    name: 'Uttarakhand Disaster Management Center',
+    coordinates: { latitude: 30.3245, longitude: 78.0419 },
+    address: 'Civil Lines, Dehradun, Uttarakhand, India',
+    capacity: 250,
+    available: true
+  },
+  {
+    id: '8',
+    name: 'Odisha Super Cyclone Shelter',
+    coordinates: { latitude: 20.2850, longitude: 85.8139 },
+    address: 'Municipal Hall, Bhubaneswar, Odisha, India',
+    capacity: 700,
+    available: true
+  },
+  {
+    id: '9',
+    name: 'Mumbai Flood Relief Center',
+    coordinates: { latitude: 19.0760, longitude: 72.8777 },
+    address: 'Municipal School, Dadar, Mumbai, Maharashtra, India',
+    capacity: 500,
     available: true
   }
 ];
