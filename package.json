@@ -2,7 +2,7 @@
   "name": "disaster-alert",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://Subhra1432.github.io/Disaster-Alert-System",
+  "homepage": "https://Subhra1432.github.io/Disaster-Alert-System/",
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.4",
@@ -21,7 +21,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && cp public/.nojekyll build/",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
