@@ -103,7 +103,7 @@ const seedDisasterData = async (): Promise<void> => {
         'If outside, stay in open areas away from buildings',
         'Be prepared for aftershocks'
       ]),
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
       radius: 100,
       active: 1
     },
@@ -121,7 +121,7 @@ const seedDisasterData = async (): Promise<void> => {
         'Stay away from storm drains and culverts',
         'Follow evacuation orders if given'
       ]),
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
       radius: 50,
       active: 1
     },
@@ -139,7 +139,7 @@ const seedDisasterData = async (): Promise<void> => {
         'Close all windows and doors before leaving',
         'Monitor local news for updates'
       ]),
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
       radius: 75,
       active: 1
     }
@@ -464,7 +464,7 @@ const mockDisasterAlerts: DisasterAlert[] = [
       'If outside, stay in open areas away from buildings',
       'Be prepared for aftershocks'
     ],
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
     radius: 100,
     active: true
   },
@@ -484,7 +484,7 @@ const mockDisasterAlerts: DisasterAlert[] = [
       'Stay away from storm drains and culverts',
       'Follow evacuation orders if given'
     ],
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
     radius: 50,
     active: true
   },
@@ -504,7 +504,7 @@ const mockDisasterAlerts: DisasterAlert[] = [
       'Close all windows and doors before leaving',
       'Monitor local news for updates'
     ],
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
     radius: 75,
     active: true
   }

@@ -60,7 +60,7 @@ const convertUSGSEarthquakeToAlert = (earthquake: any): DisasterAlert => {
       }
     },
     safetyTips,
-    timestamp: new Date(earthquake.properties.time).toISOString(),
+    timestamp: new Date(earthquake.properties.time).toISOString().split('T')[0] + 'T00:00:00.000Z',
     radius: Math.ceil(magnitude * 10), // Simple approximation of affected radius in km
     active: true
   };
@@ -133,7 +133,7 @@ const convertEONETEventToAlert = (event: any): DisasterAlert | null => {
       }
     },
     safetyTips,
-    timestamp: new Date(latestGeometry.date).toISOString(),
+    timestamp: new Date(latestGeometry.date).toISOString().split('T')[0] + 'T00:00:00.000Z',
     radius: 50, // Default radius
     active: true
   };

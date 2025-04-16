@@ -43,7 +43,7 @@ const mockDisasters: DisasterAlert[] = [
       'If outside, stay in open areas away from buildings',
       'Be prepared for aftershocks'
     ],
-    timestamp: new Date().toISOString(),
+    timestamp: '2023-10-15T08:30:00.000Z',
     radius: 100,
     active: true
   },
@@ -63,7 +63,7 @@ const mockDisasters: DisasterAlert[] = [
       'Stay away from storm drains and culverts',
       'Follow evacuation orders if given'
     ],
-    timestamp: new Date().toISOString(),
+    timestamp: '2023-09-22T14:45:00.000Z',
     radius: 50,
     active: true
   },
@@ -83,7 +83,7 @@ const mockDisasters: DisasterAlert[] = [
       'Close all windows and doors before leaving',
       'Monitor local news for updates'
     ],
-    timestamp: new Date().toISOString(),
+    timestamp: '2023-11-03T10:15:00.000Z',
     radius: 75,
     active: true
   },
@@ -103,7 +103,7 @@ const mockDisasters: DisasterAlert[] = [
       'Have emergency supplies ready',
       'Stay away from windows during the storm'
     ],
-    timestamp: new Date().toISOString(),
+    timestamp: '2023-08-30T09:00:00.000Z',
     radius: 200,
     active: true
   },
@@ -123,7 +123,7 @@ const mockDisasters: DisasterAlert[] = [
       'Stay away from the coast',
       'Do not return until officials say it is safe'
     ],
-    timestamp: new Date().toISOString(),
+    timestamp: '2023-12-05T05:30:00.000Z',
     radius: 150,
     active: true
   }

@@ -216,7 +216,7 @@ const ReportPage: React.FC = () => {
           }
         },
         safetyTips: [], // Would be added by emergency services
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
         radius: 5, // Default radius in km
         active: true
       };

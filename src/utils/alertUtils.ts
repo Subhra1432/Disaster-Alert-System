@@ -37,7 +37,11 @@ export const getDisasterIcon = (type: DisasterType): string => {
 // Format timestamp to readable date
 export const formatAlertTime = (timestamp: string): string => {
   const date = new Date(timestamp);
-  return date.toLocaleString();
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 };
 
 // Get human-readable severity
