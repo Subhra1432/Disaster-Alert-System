@@ -3,7 +3,6 @@ import { DisasterAlert, UserLocation, SafetyShelter } from '../models/types';
 import { locationService } from '../services/locationService';
 import { notificationService } from '../services/notificationService';
 import { sortAlertsBySeverity } from '../utils/alertUtils';
-import { databaseExportService } from '../utils/excelExport';
 import AlertCard from '../components/AlertCard';
 import DisasterMap from '../components/DisasterMap';
 import ShelterCard from '../components/ShelterCard';
@@ -12,7 +11,6 @@ import {
   Typography, 
   Box,
   Paper, 
-  Button, 
   CircularProgress, 
   Tabs, 
   Tab, 
@@ -23,13 +21,11 @@ import {
   Tooltip
 } from '@mui/material';
 import { 
-  Refresh as RefreshIcon, 
   Notifications as NotificationsIcon, 
   NotificationsOff as NotificationsOffIcon,
   LocationOn as LocationIcon,
   Warning as WarningIcon,
-  Storage as StorageIcon,
-  FileDownload as FileDownloadIcon
+  Storage as StorageIcon
 } from '@mui/icons-material';
 
 const HomePage: React.FC = () => {
@@ -174,26 +170,10 @@ const HomePage: React.FC = () => {
               <IconButton 
                 onClick={toggleNotifications}
                 color={notificationsEnabled ? "primary" : "default"}
-                sx={{ mr: 1 }}
               >
                 {notificationsEnabled ? <NotificationsIcon /> : <NotificationsOffIcon />}
               </IconButton>
             </Tooltip>
-            <Button
-              variant="contained"
-              startIcon={<RefreshIcon />}
-              onClick={fetchAllData}
-              sx={{ mr: 1 }}
-            >
-              Refresh Data
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<FileDownloadIcon />}
-              onClick={() => databaseExportService.exportToExcel(alerts, shelters)}
-            >
-              Export
-            </Button>
           </Box>
         </Box>
         
